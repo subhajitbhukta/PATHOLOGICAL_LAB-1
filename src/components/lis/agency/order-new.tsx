@@ -10,13 +10,16 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useLisNav } from "@/components/lis/nav";
-import { tests, priceFor, patientsForSubAgency, patientById } from "@/lib/lis/data";
+import { tests, priceFor, patientsForSubAgency, patientById, requiredVials } from "@/lib/lis/data";
 import { inr } from "@/lib/lis/format";
 import {
   Field, FormGrid, Money, PageHeader, Panel,
   PrintButton, SampleLabelCard, SearchInput,
 } from "@/components/lis/widgets";
-import { CheckCircle2, ChevronLeft, ChevronRight, FlaskConical, Home, IndianRupee, Info, UserPlus, Users } from "lucide-react";
+import { ReportFormatField, VialBarcodeStep, VialGuidanceList, VialSummaryChip } from "@/components/lis/vial-entry";
+import type { VialBarcodeEntry } from "@/components/lis/vial-entry";
+import { CheckCircle2, ChevronLeft, ChevronRight, FlaskConical, Home, IndianRupee, Info, ScanLine, UserPlus, Users } from "lucide-react";
+import type { ReportBackground } from "@/lib/lis/types";
 
 // ---------- Agency scope (demo: XYZ Collection Centre) ----------
 const AGENCY_ID = "SUB-001";
@@ -26,12 +29,18 @@ const agencyPatients = patientsForSubAgency(AGENCY_ID);
 
 interface Sel { code: string; name: string; cost: number; patientPay: number }
 
-const STEPS = ["Patient", "Tests & Confirm"];
+const STEPS = ["Patient", "Select Tests", "Vial Barcodes & Confirm"];
 
 export function AgencyOrderNewView() {
   const { go } = useLisNav();
   const [step, setStep] = React.useState(0);
   const [done, setDone] = React.useState(false);
+
+  // Vial barcodes (scanned/entered, never generated) + report format preference
+  const [vialEntries, setVialEntries] = React.useState<VialBarcodeEntry[]>([
+    { container: "EDTA Vacutainer (Lavender)", barcode: "8210034604" },
+  ]);
+  const [reportFormat, setReportFormat] = React.useState<ReportBackground>("With Background");
 
   // Step 1 — patient
   const [mode, setMode] = React.useState<"existing" | "new">("existing");
@@ -73,6 +82,10 @@ export function AgencyOrderNewView() {
     ? `${patientDisplay?.age}y / ${patientDisplay?.gender === "Male" ? "M" : "F"}`
     : "35y / F";
 
+  const vials = requiredVials(sel.map((s) => s.code));
+  const vialsComplete = vials.length > 0 && vials.every((v) => (vialEntries.find((e) => e.container === v.container)?.barcode ?? "").trim().length > 0);
+  const noDupes = vialEntries.filter((e) => e.barcode).every((e, i, arr) => arr.findIndex((o) => o.barcode === e.barcode && o.barcode) === i);
+
   const orderId = "ORD-20260928-00126";
   const sampleId = "SMP-20260928-00912";
 
@@ -113,8 +126,8 @@ export function AgencyOrderNewView() {
               <div className="flex-1">
                 <p className="text-base font-semibold text-emerald-900">Order booked for your centre</p>
                 <p className="text-sm text-emerald-800">
-                  Order <b>{orderId}</b> created · Sample <b>{sampleId}</b> allocated. Hand the barcode-labelled tubes to the
-                  LabRunners rider at today&apos;s 5:00 pm pickup. SMS + WhatsApp confirmation sent to the patient.
+                  Order <b>{orderId}</b> created · Sample <b>{sampleId}</b> linked to {vials.length} recorded vial barcode(s).
+                  Hand the tubes to the LabRunners rider — the rider scans each barcode at pickup. SMS + WhatsApp confirmation sent to the patient.
                 </p>
               </div>
               <Button onClick={() => go("agency/orders")}>Go to Orders</Button>
@@ -133,14 +146,21 @@ export function AgencyOrderNewView() {
                 <Badge variant="outline" className="font-mono">{sampleId}</Badge>
               </div>
             </Panel>
-            <Panel title="Print Barcode Label" description="Affix on every tube of this sample">
-              <SampleLabelCard
-                sampleId={sampleId} patientName={patientName} ageSex={patientAgeSex}
-                type="Whole Blood EDTA" container="EDTA Vacutainer (Lavender)"
-                tests={sel.map((s) => s.code).join(", ")} collectedAt="28 Sep 2026, 12:10 pm"
-                source={`${AGENCY_NAME} (via ABC Diagnostics)`}
-              />
-              <div className="mt-3 flex justify-end"><PrintButton label="Print Label" /></div>
+            <Panel title="Recorded Vial Barcodes" description="Pre-printed labels scanned at entry — one slip per tube">
+              <div className="space-y-3">
+                {vials.map((v, i) => (
+                  <SampleLabelCard
+                    key={v.container}
+                    sampleId={`${sampleId}-${i + 1}`}
+                    barcode={vialEntries.find((e) => e.container === v.container)?.barcode || "—"}
+                    patientName={patientName} ageSex={patientAgeSex}
+                    type={v.sampleType} container={v.container}
+                    tests={v.tests.join(", ")} collectedAt="28 Sep 2026, 12:10 pm"
+                    source={`${AGENCY_NAME} (via ABC Diagnostics)`}
+                  />
+                ))}
+              </div>
+              <div className="mt-3 flex justify-end"><PrintButton label="Print Label Slips" /></div>
             </Panel>
           </div>
         </div>
@@ -203,7 +223,7 @@ export function AgencyOrderNewView() {
                         <Checkbox checked={checked} onCheckedChange={() => toggleTest(t.code, t.name)} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{t.name} <span className="ml-1 font-mono text-[10px] text-slate-400">{t.code}</span></p>
-                          <p className="truncate text-[11px] text-muted-foreground">{t.department} · TAT {t.tatHours}h{hasRate ? " · contracted rate" : " · no agency rate — list applies"}</p>
+                          <p className="truncate text-[11px] text-muted-foreground">{t.department} · {t.sampleType} · {t.sampleVolume} · TAT {t.tatHours}h{hasRate ? " · contracted rate" : " · no agency rate — list applies"}</p>
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="text-sm font-semibold tabular-nums text-amber-700">{inr(priceFor(t.code, "SUB", AGENCY_ID))}</p>
@@ -222,9 +242,37 @@ export function AgencyOrderNewView() {
                 </div>
                 <div className="mt-4 flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setStep(0)}><ChevronLeft className="mr-1 h-4 w-4" /> Back</Button>
-                  <Button disabled={sel.length === 0} onClick={() => setDone(true)}>
-                    <FlaskConical className="mr-1.5 h-4 w-4" /> Confirm Booking
+                  <Button disabled={sel.length === 0} onClick={() => setStep(2)}>
+                    Continue to Vial Barcodes <ChevronRight className="ml-1 h-4 w-4" />
                   </Button>
+                </div>
+              </Panel>
+            ) : null}
+
+            {step === 2 ? (
+              <Panel title="3 · Vial Barcodes & Confirm" description="Scan/type each pre-printed tube barcode — the LIS never generates barcodes">
+                <VialBarcodeStep codes={sel.map((s) => s.code)} entries={vialEntries} onEntriesChange={setVialEntries} />
+                {sel.length > 0 ? (
+                  <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-amber-900">
+                      <FlaskConical className="h-3.5 w-3.5" /> Tubes to draw for this order
+                    </p>
+                    <VialGuidanceList codes={sel.map((s) => s.code)} dense />
+                  </div>
+                ) : null}
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <ReportFormatField channel="SUB" value={reportFormat} onChange={setReportFormat} />
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  {!vialsComplete || !noDupes || sel.length === 0 ? (
+                    <p className="text-[11px] text-amber-700">Record every vial barcode (no duplicates) to confirm.</p>
+                  ) : <span />}
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setStep(1)}><ChevronLeft className="mr-1 h-4 w-4" /> Back</Button>
+                    <Button disabled={sel.length === 0 || !vialsComplete || !noDupes} onClick={() => setDone(true)}>
+                      <FlaskConical className="mr-1.5 h-4 w-4" /> Confirm Booking
+                    </Button>
+                  </div>
                 </div>
               </Panel>
             ) : null}
@@ -261,7 +309,9 @@ export function AgencyOrderNewView() {
             <Panel title="Good to Know">
               <div className="space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1.5"><Home className="h-3.5 w-3.5 text-amber-600" /> Home collection available via your centre (+₹100 visit fee)</div>
-                <div className="flex items-center gap-1.5"><FlaskConical className="h-3.5 w-3.5 text-amber-600" /> Sample ID + barcode allocated on confirm</div>
+                <VialSummaryChip codes={sel.map((s) => s.code)} />
+                <div className="flex items-center gap-1.5"><ScanLine className="h-3.5 w-3.5 text-amber-600" /> Scan pre-printed vial barcodes — LIS never generates them</div>
+                <div className="flex items-center gap-1.5"><Info className="h-3.5 w-3.5 text-amber-600" /> Report format: {reportFormat}</div>
                 <div className="flex items-center gap-1.5"><IndianRupee className="h-3.5 w-3.5 text-amber-600" /> Monthly credit settlement with ABC Diagnostics</div>
               </div>
             </Panel>

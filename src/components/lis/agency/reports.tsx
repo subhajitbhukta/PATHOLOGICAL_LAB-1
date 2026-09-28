@@ -13,6 +13,7 @@ import {
 import type { Column } from "@/components/lis/widgets";
 import { ReportDialog, toReportView } from "@/components/lis/report-sheet";
 import type { ReportViewData } from "@/components/lis/report-sheet";
+import type { ReportBackground } from "@/lib/lis/types";
 import { Eye, FileDown, FileText, Info, QrCode } from "lucide-react";
 
 const AGENCY_ID = "SUB-001";
@@ -74,7 +75,7 @@ export function AgencyReportsView() {
   const { go } = useLisNav();
   const [report, setReport] = React.useState<ReportViewData | null>(null);
 
-  const openReport = (r: AgencyReportRow) => {
+  const openReport = (r: AgencyReportRow, background: ReportBackground = "With Background") => {
     const p = patientById(r.patientId);
     setReport(
       toReportView(
@@ -88,12 +89,16 @@ export function AgencyReportsView() {
           comments: `Draft preview for ${AGENCY_NAME} — final release pending pathologist approval at Apex central lab.`,
           qrToken: `APX-VER-${r.reportId.slice(-8)}`,
           source: `${AGENCY_NAME} (via ABC Diagnostics)`,
+          background,
         },
         p?.name ?? r.patient,
         p ? `${p.age}y / ${p.gender === "Male" ? "M" : "F"}` : "31y / F",
       ),
     );
   };
+
+  const changeFormat = (v: ReportBackground) =>
+    setReport((cur) => (cur ? { ...cur, background: v } : cur));
 
   const columns: Column<AgencyReportRow>[] = [
     { key: "id", header: "Report ID", value: (r) => r.reportId, render: (r) => <span className="font-mono text-xs font-medium text-amber-800">{r.reportId}</span> },
@@ -132,7 +137,11 @@ export function AgencyReportsView() {
 
       <div className="flex items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-        <p>Only reports of patients registered by your agency are visible. Reports remain in this list after delivery.</p>
+        <p>
+          Only reports of patients registered by your agency are visible. Reports remain in this list after delivery.
+          As a Sub-Agency you can preview every report <span className="font-semibold">With Background</span> (ranges +
+          interpretation) or <span className="font-semibold">Without Background</span> (compact) — switch inside the preview.
+        </p>
       </div>
 
       <Panel>
@@ -165,7 +174,7 @@ export function AgencyReportsView() {
         </Panel>
       </div>
 
-      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} />
+      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} onFormatChange={changeFormat} />
     </div>
   );
 }

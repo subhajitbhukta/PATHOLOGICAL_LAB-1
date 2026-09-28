@@ -10,7 +10,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { patientById, priceFor, resultLines, systemConfig as cfg } from "@/lib/lis/data";
 import { fmtDate, fmtDateTime, inr } from "@/lib/lis/format";
 import { Barcode, FlagPill, Money, PrintButton, QR, StatusPill } from "@/components/lis/widgets";
-import { FileDown, Mail, MessageSquare, Printer, ShieldCheck, X } from "lucide-react";
+import type { ReportBackground } from "@/lib/lis/types";
+import { FileDown, Info, Lock, Mail, MessageSquare, Printer, ShieldCheck, X } from "lucide-react";
 
 // ============================================================
 // Full lab report — printable, template-based, with QR verify
@@ -35,10 +36,13 @@ export interface ReportViewData {
   status: string;
   department?: string;
   kind?: string;
+  /** Report format — B2B / Sub-Agency may choose compact (without) background; B2C is always With */
+  background: ReportBackground;
 }
 
 export function LabReportDocument({ data }: { data: ReportViewData }) {
   const p = patientById(data.patientId ?? "");
+  const withBackground = data.background !== "Without Background";
   const lines = resultLines.filter((l) => l.sampleId === data.sampleId);
   const deptLines = lines.length > 0
     ? lines
@@ -68,6 +72,9 @@ export function LabReportDocument({ data }: { data: ReportViewData }) {
           <p>Collected: {fmtDateTime(data.collectedAt)}</p>
           <p>Received: {fmtDateTime(data.receivedAt)}</p>
           <p>Reported: {fmtDateTime(data.reportedAt)}</p>
+          <span className={`mt-1 inline-block rounded border px-1.5 py-0.5 text-[9px] font-bold uppercase ${withBackground ? "border-teal-300 bg-teal-50 text-teal-700" : "border-slate-300 bg-slate-100 text-slate-600"}`}>
+            {withBackground ? "With Background" : "Without Background"}
+          </span>
         </div>
       </div>
 
@@ -93,8 +100,8 @@ export function LabReportDocument({ data }: { data: ReportViewData }) {
                 <th className="py-1.5 text-right font-semibold">Result</th>
                 <th className="py-1.5 text-center font-semibold">Flag</th>
                 <th className="py-1.5 pl-4 font-semibold">Unit</th>
-                <th className="py-1.5 text-right font-semibold">Reference Range</th>
-                <th className="hidden py-1.5 pl-4 font-semibold sm:table-cell">Method</th>
+                {withBackground ? <th className="py-1.5 text-right font-semibold">Reference Range</th> : null}
+                {withBackground ? <th className="hidden py-1.5 pl-4 font-semibold sm:table-cell">Method</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -104,8 +111,8 @@ export function LabReportDocument({ data }: { data: ReportViewData }) {
                   <td className={`py-1.5 text-right font-bold ${l.flag === "H" || l.flag === "A" ? "text-rose-600" : l.flag === "L" ? "text-amber-600" : ""}`}>{l.value || "—"}</td>
                   <td className="py-1.5 text-center"><FlagPill flag={l.flag} /></td>
                   <td className="py-1.5 pl-4 text-slate-600">{l.unit}</td>
-                  <td className="py-1.5 text-right text-slate-600">{l.refRange}</td>
-                  <td className="hidden py-1.5 pl-4 text-slate-500 sm:table-cell">{l.method}</td>
+                  {withBackground ? <td className="py-1.5 text-right text-slate-600">{l.refRange}</td> : null}
+                  {withBackground ? <td className="hidden py-1.5 pl-4 text-slate-500 sm:table-cell">{l.method}</td> : null}
                 </tr>
               ))}
             </tbody>
@@ -113,16 +120,26 @@ export function LabReportDocument({ data }: { data: ReportViewData }) {
         </div>
       ))}
 
-      {/* Interpretation */}
-      {(data.interpretation || data.comments) && (
-        <div className="mt-4 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
-          {data.interpretation ? (
-            <p><span className="font-bold uppercase text-teal-700">Interpretation: </span>{data.interpretation}</p>
-          ) : null}
-          {data.comments ? (
-            <p><span className="font-bold uppercase text-teal-700">Comments: </span>{data.comments}</p>
-          ) : null}
-        </div>
+      {withBackground ? (
+        <>
+          {/* Interpretation */}
+          {(data.interpretation || data.comments) && (
+            <div className="mt-4 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs">
+              {data.interpretation ? (
+                <p><span className="font-bold uppercase text-teal-700">Interpretation: </span>{data.interpretation}</p>
+              ) : null}
+              {data.comments ? (
+                <p><span className="font-bold uppercase text-teal-700">Comments: </span>{data.comments}</p>
+              ) : null}
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="mt-4 rounded border border-dashed border-slate-300 px-3 py-2 text-[10px] leading-relaxed text-slate-500">
+          Compact format issued at B2B / Sub-Agency request — reference ranges, methodology and clinical
+          interpretation are intentionally omitted. The patient-facing copy of this report always carries the
+          full technical background.
+        </p>
       )}
 
       {/* Footer — signature + QR */}
@@ -238,9 +255,16 @@ export function InvoiceDocument({ data }: { data: InvoiceViewData }) {
 // Dialog / Sheet wrappers used by all portals
 // ============================================================
 export function ReportDialog({
-  open, onOpenChange, data,
-}: { open: boolean; onOpenChange: (o: boolean) => void; data: ReportViewData | null }) {
+  open, onOpenChange, data, onFormatChange, formatLocked,
+}: {
+  open: boolean; onOpenChange: (o: boolean) => void; data: ReportViewData | null;
+  /** When provided, the viewer can switch between With / Without Background before printing */
+  onFormatChange?: (v: ReportBackground) => void;
+  /** When true the toggle is hidden and a lock note is shown (B2C policy) */
+  formatLocked?: boolean;
+}) {
   if (!data) return null;
+  const withBackground = data.background !== "Without Background";
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto p-0">
@@ -250,12 +274,37 @@ export function ReportDialog({
             <DialogDescription className="text-xs">Template-based PDF preview · QR verified · print ready</DialogDescription>
           </div>
           <div className="flex items-center gap-1.5">
+            {onFormatChange ? (
+              <div className="flex overflow-hidden rounded-md border border-slate-200" role="group" aria-label="Report format">
+                <button
+                  className={`px-2.5 py-1.5 text-[11px] font-medium ${withBackground ? "bg-teal-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                  onClick={() => onFormatChange("With Background")}
+                >
+                  With Background
+                </button>
+                <button
+                  className={`px-2.5 py-1.5 text-[11px] font-medium ${!withBackground ? "bg-teal-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"}`}
+                  onClick={() => onFormatChange("Without Background")}
+                >
+                  Without
+                </button>
+              </div>
+            ) : formatLocked ? (
+              <span className="flex items-center gap-1 rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5 text-[11px] font-medium text-teal-800">
+                <Lock className="h-3 w-3" /> With Background — B2C policy
+              </span>
+            ) : null}
             <PrintButton />
             <Button variant="outline" size="sm"><FileDown className="mr-1 h-4 w-4" /> PDF</Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenChange(false)}><X className="h-4 w-4" /></Button>
           </div>
         </DialogHeader>
         <div className="p-4">
+          {!onFormatChange && !formatLocked ? (
+            <p className="mb-3 flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+              <Info className="h-3.5 w-3.5" /> B2B &amp; Sub-Agency reports can be issued With or Without technical background — B2C reports always carry it.
+            </p>
+          ) : null}
           <LabReportDocument data={data} />
         </div>
       </DialogContent>
@@ -370,7 +419,7 @@ export function toReportView(r: {
   id: string; orderId: string; sampleId: string; patientId: string; status: string;
   pathologist: string; pathologistQual: string; collectedAt: string; receivedAt: string;
   reportedAt: string; releasedAt: string; interpretation?: string; comments?: string;
-  qrToken: string; source: string;
+  qrToken: string; source: string; background?: ReportBackground;
 }, patientName: string, ageSex: string): ReportViewData {
   return {
     reportId: r.id, orderId: r.orderId, sampleId: r.sampleId, patientId: r.patientId,
@@ -378,6 +427,7 @@ export function toReportView(r: {
     collectedAt: r.collectedAt, receivedAt: r.receivedAt, reportedAt: r.reportedAt,
     pathologist: r.pathologist, pathologistQual: r.pathologistQual,
     interpretation: r.interpretation, comments: r.comments, qrToken: r.qrToken, status: r.status,
+    background: r.background ?? "With Background",
   };
 }
 

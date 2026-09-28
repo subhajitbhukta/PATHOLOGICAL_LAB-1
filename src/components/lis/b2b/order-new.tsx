@@ -9,15 +9,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useLisNav } from "@/components/lis/nav";
-import { partners, patients, priceFor, subAgencies, tests } from "@/lib/lis/data";
+import { partners, patients, priceFor, subAgencies, tests, requiredVials } from "@/lib/lis/data";
 import { inr } from "@/lib/lis/format";
 import {
   Field, FormGrid, Money, PageHeader, Panel, PrintButton, SampleLabelCard, SearchInput,
 } from "@/components/lis/widgets";
+import { ReportFormatField, VialBarcodeStep, VialSummaryChip } from "@/components/lis/vial-entry";
+import type { VialBarcodeEntry } from "@/components/lis/vial-entry";
 import {
   BadgeCheck, CheckCircle2, ChevronLeft, ChevronRight, CreditCard, Lock,
   ShieldCheck, UserPlus, Users,
 } from "lucide-react";
+import type { ReportBackground } from "@/lib/lis/types";
 
 // ============================================================
 // B2B New Test Order — 3-step wizard (Patient → Tests → Confirm)
@@ -33,7 +36,7 @@ const myPatients = patients.filter(
     (p.channel === "SUB" && p.sourceId !== undefined && SUB_IDS.includes(p.sourceId)),
 );
 const activeTests = tests.filter((t) => t.status === "Active");
-const STEPS = ["Patient", "Select Tests", "Confirm & Generate"];
+const STEPS = ["Patient", "Select Tests", "Sample Tubes & Vial Barcodes", "Confirm & Generate"];
 
 interface Sel { code: string; name: string; rate: number; list: number }
 
@@ -60,6 +63,16 @@ export function B2bOrderNewView() {
 
   // Step 3 — payment
   const [payMode, setPayMode] = React.useState("Credit");
+
+  // Vial barcodes (scanned/entered, never generated) + report format preference
+  const [vialEntries, setVialEntries] = React.useState<VialBarcodeEntry[]>([
+    { container: "EDTA Vacutainer (Lavender)", barcode: "8210034603" },
+  ]);
+  const [reportFormat, setReportFormat] = React.useState<ReportBackground>("Without Background");
+
+  const vials = requiredVials(sel.map((s) => s.code));
+  const vialsComplete = vials.length > 0 && vials.every((v) => (vialEntries.find((e) => e.container === v.container)?.barcode ?? "").trim().length > 0);
+  const noDupes = vialEntries.filter((e) => e.barcode).every((e, i, arr) => arr.findIndex((o) => o.barcode === e.barcode && o.barcode) === i);
 
   const patientDisplay = myPatients.find((p) => p.id === selectedId);
   const patientName = mode === "existing" ? patientDisplay?.name ?? "—" : form.name;
@@ -134,8 +147,8 @@ export function B2bOrderNewView() {
               <div className="flex-1">
                 <p className="text-base font-semibold text-emerald-900">Order booked on your B2B account</p>
                 <p className="text-sm text-emerald-800">
-                  {orderId} · {sel.length} test(s) · Net {inr(net)} · Payment {payMode}.
-                  Sample label generated below — barcode label queued to your centre printer.
+                  {orderId} · {sel.length} test(s) · Net {inr(net)} · Payment {payMode} · {reportFormat} reports.
+                  {vials.length} pre-printed vial barcode(s) recorded below — printed label slips for your centre.
                 </p>
               </div>
               <div className="flex gap-2">
@@ -163,15 +176,22 @@ export function B2bOrderNewView() {
                 </FormGrid>
               </div>
             </Panel>
-            <Panel title="Print Barcode Label" description="Affix on every tube of this sample">
-              <SampleLabelCard
-                sampleId={sampleId} patientName={patientName} ageSex={patientAgeSex}
-                type="Whole Blood EDTA" container="EDTA Vacutainer (Lavender)"
-                tests={sel.map((s) => s.code).join(", ")} collectedAt="28 Sep 2026, 12:40 pm"
-                source={partner.name}
-              />
+            <Panel title="Recorded Vial Barcodes" description="Pre-printed labels scanned at entry — one slip per tube">
+              <div className="space-y-3">
+                {vials.map((v, i) => (
+                  <SampleLabelCard
+                    key={v.container}
+                    sampleId={`${sampleId}-${i + 1}`}
+                    barcode={vialEntries.find((e) => e.container === v.container)?.barcode || "—"}
+                    patientName={patientName} ageSex={patientAgeSex}
+                    type={v.sampleType} container={v.container}
+                    tests={v.tests.join(", ")} collectedAt="28 Sep 2026, 12:40 pm"
+                    source={partner.name}
+                  />
+                ))}
+              </div>
               <div className="mt-3">
-                <PrintButton label="Print Barcode" />
+                <PrintButton label="Print Label Slips" />
               </div>
             </Panel>
           </div>
@@ -259,7 +279,7 @@ export function B2bOrderNewView() {
                         <Checkbox checked={checked} onCheckedChange={() => toggleTest(t.code)} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{t.name} <span className="ml-1 font-mono text-[10px] text-slate-400">{t.code}</span></p>
-                          <p className="truncate text-[11px] text-muted-foreground">{t.department} · {t.sampleType} · TAT {t.tatHours}h</p>
+                          <p className="truncate text-[11px] text-muted-foreground">{t.department} · {t.sampleType} in {t.container} · {t.sampleVolume} · TAT {t.tatHours}h</p>
                         </div>
                         <div className="shrink-0 text-right">
                           <span className="block text-xs text-slate-400 line-through">{inr(t.b2cPrice)}</span>
@@ -277,7 +297,24 @@ export function B2bOrderNewView() {
             ) : null}
 
             {step === 2 ? (
-              <Panel title="3 · Confirm & Generate" description="Summary, B2B billing and barcode generation">
+              <Panel title="3 · Sample Tubes & Vial Barcodes" description="Guided vial requirements — your centre scans the pre-printed barcode on each tube">
+                <VialBarcodeStep codes={sel.map((s) => s.code)} entries={vialEntries} onEntriesChange={setVialEntries} />
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <ReportFormatField channel="B2B" value={reportFormat} onChange={setReportFormat} />
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  {!vialsComplete || !noDupes ? (
+                    <p className="text-[11px] text-amber-700">Record every vial barcode (no duplicates) to continue.</p>
+                  ) : <span />}
+                  <Button variant="outline" disabled={!vialsComplete || !noDupes} onClick={() => setStep(3)}>
+                    All barcodes recorded — Continue <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+              </Panel>
+            ) : null}
+
+            {step === 3 ? (
+              <Panel title="4 · Confirm & Generate" description="Summary, B2B billing and barcode lock-in">
                 <div className="space-y-1 rounded-lg border p-3 text-sm">
                   <p className="font-medium">{patientName} <span className="text-xs text-muted-foreground">· {patientAgeSex} · {mode === "existing" ? patientDisplay?.source : form.source}</span></p>
                   <table className="mt-2 w-full text-xs">
@@ -326,11 +363,11 @@ export function B2bOrderNewView() {
                 </FormGrid>
                 <div className="mt-3 flex items-start gap-2 rounded-lg border border-violet-200 bg-violet-50 p-3 text-xs leading-relaxed text-violet-900">
                   <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  On confirm: order <b>{orderId}</b> is created for {partner.name}, sample <b>{sampleId}</b> is allocated with barcode labels, and the amount is posted to your ledger {payMode === "Credit" ? "on credit (due 12 Oct 2026)" : `against ${payMode} collection`}.
+                  On confirm: order <b>{orderId}</b> is created for {partner.name}, sample <b>{sampleId}</b> is linked to the {vials.length} recorded vial barcode(s) ({reportFormat} report format), and the amount is posted to your ledger {payMode === "Credit" ? "on credit (due 12 Oct 2026)" : `against ${payMode} collection`}.
                 </div>
                 <div className="mt-4 flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setStep(1)}><ChevronLeft className="mr-1 h-4 w-4" /> Back</Button>
-                  <Button disabled={sel.length === 0} className="bg-violet-600 text-white hover:bg-violet-700" onClick={() => setDone(true)}>
+                  <Button variant="outline" onClick={() => setStep(2)}><ChevronLeft className="mr-1 h-4 w-4" /> Back</Button>
+                  <Button disabled={sel.length === 0 || !vialsComplete || !noDupes} className="bg-violet-600 text-white hover:bg-violet-700" onClick={() => setDone(true)}>
                     <CreditCard className="mr-1.5 h-4 w-4" /> Confirm Booking
                   </Button>
                 </div>
@@ -339,7 +376,7 @@ export function B2bOrderNewView() {
 
             <div className="flex justify-between">
               <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)}><ChevronLeft className="mr-1 h-4 w-4" /> Previous</Button>
-              {step < 2 ? <Button className="bg-violet-600 text-white hover:bg-violet-700" onClick={() => setStep(step + 1)}>Next <ChevronRight className="ml-1 h-4 w-4" /></Button> : null}
+              {step < 3 ? <Button className="bg-violet-600 text-white hover:bg-violet-700" onClick={() => setStep(step + 1)}>Next <ChevronRight className="ml-1 h-4 w-4" /></Button> : null}
             </div>
           </div>
 
@@ -373,6 +410,8 @@ export function B2bOrderNewView() {
                 <div className="flex items-center justify-between"><span>Pricing tier</span><span className="font-medium text-slate-700">{partner.pricingTier}</span></div>
                 <div className="flex items-center justify-between"><span>Credit used</span><span className="font-medium text-slate-700">{inr(partner.outstanding)} / {inr(partner.creditLimit)}</span></div>
                 <div className="flex items-center gap-1.5 pt-1 text-violet-700"><Lock className="h-3 w-3" /> Rate card managed by Apex Labs</div>
+                <VialSummaryChip codes={sel.map((s) => s.code)} />
+                <div className="flex items-center gap-1.5 text-violet-700"><ShieldCheck className="h-3 w-3" /> Report format: {reportFormat}</div>
               </div>
             </Panel>
           </div>

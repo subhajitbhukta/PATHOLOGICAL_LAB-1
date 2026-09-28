@@ -482,10 +482,10 @@ export function Barcode({ value, height = 40, className }: { value: string; heig
 }
 
 export function SampleLabelCard({
-  sampleId, patientName, ageSex, type, container, tests, collectedAt, source,
+  sampleId, barcode, patientName, ageSex, type, container, tests, collectedAt, source,
 }: {
-  sampleId: string; patientName: string; ageSex: string; type: string; container: string;
-  tests: string; collectedAt: string; source?: string;
+  sampleId: string; barcode: string; patientName: string; ageSex: string; type: string;
+  container: string; tests: string; collectedAt: string; source?: string;
 }) {
   return (
     <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm">
@@ -501,8 +501,10 @@ export function SampleLabelCard({
         <p><span className="text-muted-foreground">Age/Sex:</span> <span className="font-semibold">{ageSex}</span></p>
         <p className="col-span-2"><span className="text-muted-foreground">Type:</span> <span className="font-semibold">{type} · {container}</span></p>
         <p className="col-span-2 truncate"><span className="text-muted-foreground">Tests:</span> <span className="font-semibold">{tests}</span></p>
+        <p className="col-span-2"><span className="text-muted-foreground">Vial barcode:</span> <span className="font-mono font-semibold">{barcode}</span><span className="text-muted-foreground"> · internal ref {sampleId}</span></p>
       </div>
-      <Barcode value={sampleId} height={34} className="mt-2" />
+      <Barcode value={barcode} height={34} className="mt-2" />
+      <p className="mt-1 text-center text-[9px] text-muted-foreground">Pre-printed label — number recorded by scan/entry at collection</p>
     </div>
   );
 }

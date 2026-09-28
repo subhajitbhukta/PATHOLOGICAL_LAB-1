@@ -47,6 +47,9 @@ export const INTERNAL_FLOW: OrderStatus[] = [
 ];
 
 export type PayStatus = "Paid" | "Unpaid" | "Partial" | "Credit" | "Refunded";
+
+// Report background preference — B2B & Sub-Agency can choose; B2C is always "With Background"
+export type ReportBackground = "With Background" | "Without Background";
 export type Flag = "H" | "L" | "N" | "A";
 export type ResultState = "Pending" | "Entered" | "Tech Verified" | "Approved" | "Rejected";
 export type ReportStatus = "Pending Verification" | "Approved" | "Delivered" | "Draft";
@@ -93,6 +96,7 @@ export interface TestMaster {
   department: string;
   sampleType: string;
   container: string;
+  sampleVolume: string; // required fill volume, specified by admin in the master (guides staff at entry)
   methodology: string;
   unit: string;
   tatHours: number;
@@ -272,6 +276,7 @@ export interface Order {
   homeCollection: boolean;
   remarks?: string;
   tatDue: string;
+  reportPreference: ReportBackground;
 }
 
 export interface Sample {
@@ -282,6 +287,10 @@ export interface Sample {
   type: string;
   container: string;
   volume: string;
+  /** Pre-printed vial barcode — scanned or hand-entered by the operator at registration/receiving.
+   *  The system NEVER generates barcodes; it only records the number read off the physical label. */
+  barcode: string;
+  barcodeBy?: string;
   collectedAt: string;
   collectedBy: string;
   source: string;
@@ -312,6 +321,8 @@ export interface Pickup {
   manifestNo: string;
   receivedAt?: string;
   exceptions?: string;
+  /** Pre-printed vial barcodes expected on this manifest — reconciled 1:1 by the rider's scanner */
+  barcodes?: string[];
 }
 
 // ---------- Results / Reports ----------
@@ -381,6 +392,7 @@ export interface LabReport {
   interpretation?: string;
   comments?: string;
   kind: "Numeric" | "Descriptive";
+  background: ReportBackground;
 }
 
 // ---------- Billing ----------

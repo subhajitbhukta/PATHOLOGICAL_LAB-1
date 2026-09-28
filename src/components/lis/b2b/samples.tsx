@@ -72,8 +72,8 @@ export function B2bSamplesView() {
     <div className="space-y-5">
       <PageHeader
         title="Samples & Barcodes"
-        subtitle={`Barcode labels for samples booked under ${partner.name} — print and affix per tube`}
-        actions={<PrintButton label="Print All Labels" />}
+        subtitle={`Vial barcodes recorded for samples booked under ${partner.name} — reprint label slips anytime`}
+        actions={<PrintButton label="Print All Slips" />}
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -83,11 +83,11 @@ export function B2bSamplesView() {
         <StatCard label="On Road" value={onRoad} icon={<Truck className="h-4 w-4" />} accent="amber" sublabel="pickup / in transit" />
       </div>
 
-      <Panel title="Printable Barcode Labels" description={`${mySamples.length} labels · standard 50×25 mm sample label stock`}>
+      <Panel title="Recorded Vial Barcode Slips" description={`${mySamples.length} slips · pre-printed barcode scanned at entry · 50×25 mm label stock`}>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {mySamples.map((s) => (
             <SampleLabelCard
-              key={s.id} sampleId={s.id} patientName={s.patientName}
+              key={s.id} sampleId={s.id} barcode={s.barcode} patientName={s.patientName}
               ageSex={orderAgeSex(s.orderId)} type={s.type} container={s.container}
               tests={s.tests.join(", ")} collectedAt={fmtDateTime(s.collectedAt)} source={s.source}
             />
@@ -100,8 +100,8 @@ export function B2bSamplesView() {
           columns={columns}
           rows={rows}
           pageSize={10}
-          searchOf={(r) => `${r.id} ${r.orderId} ${r.patientName} ${r.type} ${r.tests.join(" ")}`}
-          searchPlaceholder="Search sample / patient / order…"
+          searchOf={(r) => `${r.barcode} ${r.id} ${r.orderId} ${r.patientName} ${r.type} ${r.tests.join(" ")}`}
+          searchPlaceholder="Search vial barcode / patient / order…"
           filters={
             <Select value={stage} onValueChange={setStage}>
               <SelectTrigger className="h-9 w-52"><SelectValue /></SelectTrigger>

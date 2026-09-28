@@ -26,7 +26,7 @@ import {
 
 interface TestForm {
   code: string; name: string; shortName: string; department: string; sampleType: string;
-  container: string; methodology: string; unit: string; tatHours: number;
+  container: string; sampleVolume: string; methodology: string; unit: string; tatHours: number;
   resultType: TestMaster["resultType"]; b2cPrice: number; interpretation: string; status: string;
 }
 
@@ -60,7 +60,8 @@ export function AdminMastersTestsView() {
     setIsNew(false);
     setForm({
       code: t.code, name: t.name, shortName: t.shortName, department: t.department,
-      sampleType: t.sampleType, container: t.container, methodology: t.methodology,
+      sampleType: t.sampleType, container: t.container, sampleVolume: t.sampleVolume,
+      methodology: t.methodology,
       unit: t.unit, tatHours: t.tatHours, resultType: t.resultType, b2cPrice: t.b2cPrice,
       interpretation: t.interpretation ?? "", status: t.status,
     });
@@ -72,7 +73,8 @@ export function AdminMastersTestsView() {
     setIsNew(true);
     setForm({
       code: "HS-CRP", name: "High Sensitivity CRP", shortName: "hs-CRP", department: "Immunology",
-      sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "Immunoturbidimetry",
+      sampleType: "Serum", container: "Plain Vacutainer (Red)", sampleVolume: "5 mL",
+      methodology: "Immunoturbidimetry",
       unit: "mg/L", tatHours: 6, resultType: "Numeric", b2cPrice: 600, interpretation: "", status: "Active",
     });
     setRanges([{ sex: "Any", ageGroup: "Adult", range: "< 3.0 ( Low cardiovascular risk < 1.0 )" }]);
@@ -102,7 +104,9 @@ export function AdminMastersTestsView() {
     ) },
     { key: "dept", header: "Department", value: (r) => r.department, render: (r) => <span className="text-xs">{r.department}</span> },
     { key: "sample", header: "Sample", value: (r) => r.sampleType, render: (r) => <span className="hidden text-xs text-muted-foreground md:table-cell">{r.sampleType}</span> },
-    { key: "container", header: "Container", value: (r) => r.container, render: (r) => <span className="hidden text-xs text-muted-foreground lg:table-cell">{r.container}</span> },
+    { key: "container", header: "Container · Volume", value: (r) => `${r.container} ${r.sampleVolume}`, render: (r) => (
+      <span className="hidden text-xs text-muted-foreground lg:table-cell">{r.container} · <span className="font-medium text-slate-700">{r.sampleVolume}</span></span>
+    ) },
     { key: "method", header: "Methodology", value: (r) => r.methodology, render: (r) => <span className="hidden max-w-44 truncate text-xs text-muted-foreground xl:table-cell">{r.methodology}</span> },
     { key: "tat", header: "TAT", headClassName: "text-right", className: "text-right", value: (r) => r.tatHours, render: (r) => <span className="whitespace-nowrap text-xs tabular-nums">{r.tatHours} h</span> },
     { key: "rtype", header: "Result", value: (r) => r.resultType, render: (r) => <Badge variant="outline" className="text-[10px]">{r.resultType}</Badge> },
@@ -318,6 +322,9 @@ export function AdminMastersTestsView() {
                     <SelectContent>{containers.map((c) => <SelectItem key={c.id} value={c.name}>{c.name} ({c.color})</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
+                <Field label="Required Volume" required hint="Shown to staff at every entry screen — e.g. Sugar → 3 mL fluoride vial">
+                  <Input value={form.sampleVolume} onChange={(e) => setF({ sampleVolume: e.target.value })} placeholder="e.g. 5 mL" />
+                </Field>
                 <Field label="Methodology" required><Input value={form.methodology} onChange={(e) => setF({ methodology: e.target.value })} /></Field>
                 <Field label="Unit"><Input value={form.unit} onChange={(e) => setF({ unit: e.target.value })} placeholder="e.g. mg/dL or —" /></Field>
                 <Field label="TAT (hours)" required><Input type="number" min={1} value={form.tatHours} onChange={(e) => setF({ tatHours: Number(e.target.value) })} /></Field>
@@ -329,6 +336,20 @@ export function AdminMastersTestsView() {
                 </Field>
                 <Field label="B2C List Price (₹)" required><Input type="number" min={0} value={form.b2cPrice} onChange={(e) => setF({ b2cPrice: Number(e.target.value) })} /></Field>
               </FormGrid>
+
+              {/* Live preview of the guidance shown to operators at entry */}
+              <div className="rounded-lg border border-teal-200 bg-teal-50/60 p-3">
+                <p className="text-xs font-semibold text-teal-900">Operator guidance preview — what entry screens will show for this test</p>
+                <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-teal-900">
+                  <span><span className="text-teal-700">Sample:</span> <b>{form.sampleType}</b></span>
+                  <span><span className="text-teal-700">Vial:</span> <b>{form.container}</b></span>
+                  <span><span className="text-teal-700">Volume:</span> <b>{form.sampleVolume}</b></span>
+                </div>
+                <p className="mt-1.5 text-[11px] text-teal-800">
+                  e.g. “Sugar (FBS) → Plasma Fluoride in Sodium Fluoride (Grey Top) · 3 mL” or “CBC → Whole Blood EDTA in EDTA
+                  Vacutainer (Lavender) · 5 mL”. Barcodes are pre-printed on the vials — the system records the scanned number.
+                </p>
+              </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">

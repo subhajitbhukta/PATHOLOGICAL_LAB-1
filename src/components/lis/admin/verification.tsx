@@ -19,9 +19,13 @@ import type { Column } from "@/components/lis/widgets";
 import { LabReportDocument, toReportView } from "@/components/lis/report-sheet";
 import type { ReportViewData } from "@/components/lis/report-sheet";
 import { previewFlag } from "@/components/lis/admin/worklists";
-import { pathologists, reports, resultLines, sampleById, verificationTasks } from "@/lib/lis/data";
+import { orderById, pathologists, reports, resultLines, sampleById, verificationTasks } from "@/lib/lis/data";
 import { BadgeCheck, FileCheck2, ShieldCheck } from "lucide-react";
-import type { VerificationTask } from "@/lib/lis/types";
+import type { ReportBackground, VerificationTask } from "@/lib/lis/types";
+
+// Report format follows the order's channel preference (B2C = always With Background)
+const orderBackground = (orderId: string): ReportBackground =>
+  orderById(orderId)?.reportPreference ?? "With Background";
 
 // Build a preview payload for the review dialog — matching report when available,
 // otherwise a minimal construct from the task + sample records.
@@ -47,6 +51,7 @@ const previewFor = (t: VerificationTask): ReportViewData => {
     comments: undefined,
     qrToken: `APX-VER-${t.reportId.slice(-8)}`,
     status: "Pending Verification",
+    background: orderBackground(t.orderId),
     department: t.department,
   };
   return base;

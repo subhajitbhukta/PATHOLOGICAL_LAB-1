@@ -1,5 +1,5 @@
 import type {
-  ExternalJob, LabReport, Order, OrderItem, Pickup, ResultEntryTask, ResultLine,
+  ExternalJob, LabReport, Order, OrderItem, Pickup, ReportBackground, ResultEntryTask, ResultLine,
   Sample, VerificationTask, Flag,
 } from "./types";
 
@@ -51,6 +51,7 @@ interface OrderSeed {
   sub?: [string, string]; codes: string[]; factor?: number; disc?: number;
   payMode: Order["paymentMode"]; pay: Order["payStatus"]; status: Order["status"];
   at: string; tatDue: string; doctor?: string; home?: boolean; remarks?: string;
+  rep?: ReportBackground; // B2B / SUB can order reports with or without technical background
 }
 
 const seeds: OrderSeed[] = [
@@ -60,12 +61,12 @@ const seeds: OrderSeed[] = [
   { id: "ORD-20260928-00122", patientId: "PAT-00139", channel: "B2C", codes: ["PKG-SENIOR"], disc: 10, payMode: "Card", pay: "Paid", status: "Sample Collected", at: "2026-09-28T09:25:00", tatDue: "2026-09-29 14:00", doctor: "Dr. Suresh Mehta", home: true },
   { id: "ORD-20260928-00121", patientId: "PAT-00141", channel: "B2B", partner: ["B2B-001", "ABC Diagnostics"], codes: ["TSH", "FT4"], disc: 0, payMode: "Credit", pay: "Credit", status: "Verification Pending", at: "2026-09-28T09:40:00", tatDue: "2026-09-28 21:00", doctor: "Dr. Rekha Iyer" },
   { id: "ORD-20260928-00120", patientId: "PAT-00143", channel: "B2B", partner: ["B2B-005", "Zenith Hospital Collection"], codes: ["LIPID", "FBS", "KFT"], disc: 0, payMode: "Credit", pay: "Partial", status: "Assigned to Department", at: "2026-09-28T10:05:00", tatDue: "2026-09-28 20:00" },
-  { id: "ORD-20260928-00119", patientId: "PAT-00126", channel: "B2B", partner: ["B2B-002", "HealthPoint Collection Centre"], codes: ["PKG-DIABETES"], disc: 0, payMode: "Credit", pay: "Credit", status: "In Transit", at: "2026-09-28T10:30:00", tatDue: "2026-09-29 12:00" },
+  { id: "ORD-20260928-00119", patientId: "PAT-00126", channel: "B2B", partner: ["B2B-002", "HealthPoint Collection Centre"], codes: ["PKG-DIABETES"], disc: 0, payMode: "Credit", pay: "Credit", status: "In Transit", at: "2026-09-28T10:30:00", tatDue: "2026-09-29 12:00", rep: "Without Background" },
   { id: "ORD-20260928-00118", patientId: "PAT-00128", channel: "B2C", codes: ["DENGUE-NS1", "CBC", "WIDAL"], disc: 0, payMode: "Cash", pay: "Paid", status: "Pickup Requested", at: "2026-09-28T11:00:00", tatDue: "2026-09-28 20:00", remarks: "Fever since 3 days, urgent" },
   { id: "ORD-20260928-00117", patientId: "PAT-00131", channel: "SUB", partner: ["B2B-002", "HealthPoint Collection Centre"], sub: ["SUB-004", "Sunrise Collection Point"], codes: ["CBC", "URINE-R"], disc: 0, payMode: "Credit", pay: "Credit", status: "Picked Up", at: "2026-09-28T11:20:00", tatDue: "2026-09-28 19:00" },
   { id: "ORD-20260928-00116", patientId: "PAT-00133", channel: "SUB", partner: ["B2B-001", "ABC Diagnostics"], sub: ["SUB-003", "Maa Diagnostics"], codes: ["TSH", "VITB12"], disc: 0, payMode: "Credit", pay: "Credit", status: "Report Delivered", at: "2026-09-27T09:15:00", tatDue: "2026-09-27 22:00" },
   { id: "ORD-20260927-00115", patientId: "PAT-00130", channel: "B2B", partner: ["B2B-001", "ABC Diagnostics"], codes: ["PSA", "URINE-R"], disc: 0, payMode: "Credit", pay: "Credit", status: "Report Generated", at: "2026-09-27T10:00:00", tatDue: "2026-09-27 22:00" },
-  { id: "ORD-20260927-00114", patientId: "PAT-00136", channel: "B2B", partner: ["B2B-004", "CityCare Path Labs"], codes: ["CBC", "LFT"], disc: 0, payMode: "Credit", pay: "Credit", status: "Report Delivered", at: "2026-09-27T10:40:00", tatDue: "2026-09-27 22:00" },
+  { id: "ORD-20260927-00114", patientId: "PAT-00136", channel: "B2B", partner: ["B2B-004", "CityCare Path Labs"], codes: ["CBC", "LFT"], disc: 0, payMode: "Credit", pay: "Credit", status: "Report Delivered", at: "2026-09-27T10:40:00", tatDue: "2026-09-27 22:00", rep: "Without Background" },
   { id: "ORD-20260927-00113", patientId: "PAT-00137", channel: "SUB", partner: ["B2B-004", "CityCare Path Labs"], sub: ["SUB-005", "Kothrud Collection Centre"], codes: ["HBA1C", "LIPID"], disc: 0, payMode: "Credit", pay: "Credit", status: "Pathologist Approved", at: "2026-09-27T11:25:00", tatDue: "2026-09-27 23:00" },
   { id: "ORD-20260927-00112", patientId: "PAT-00140", channel: "SUB", partner: ["B2B-001", "ABC Diagnostics"], sub: ["SUB-002", "Health Point"], codes: ["CBC", "FBS"], disc: 0, payMode: "Credit", pay: "Credit", status: "Report Delivered", at: "2026-09-27T08:30:00", tatDue: "2026-09-27 20:00" },
   { id: "ORD-20260927-00111", patientId: "PAT-00142", channel: "B2C", codes: ["VITD"], disc: 15, payMode: "UPI", pay: "Paid", status: "Report Delivered", at: "2026-09-27T12:10:00", tatDue: "2026-09-28 12:00", remarks: "Promo price ₹999 applied" },
@@ -95,6 +96,8 @@ export const orders: Order[] = seeds.map((s) => {
     paymentMode: s.payMode, payStatus: s.pay, status: s.status, createdAt: s.at,
     collectedAt: s.status !== "Booking Confirmed" ? s.at : undefined,
     referrerDoctor: s.doctor, homeCollection: s.home ?? false, remarks: s.remarks, tatDue: s.tatDue,
+    // B2C reports always carry the technical background; B2B / Sub-Agency may opt out
+    reportPreference: s.channel === "B2C" ? "With Background" : s.rep ?? "With Background",
   };
 });
 
@@ -109,14 +112,14 @@ export const sampleSeeds: SampleSeed[] = [
   { id: "SMP-20260928-00891", orderId: "ORD-20260928-00125", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "3 mL", collectedBy: "Sarita Kadam", stage: "Test in Progress", department: "Haematology", tests: ["CBC", "TSH", "LIPID"], collectedAt: "2026-09-28T08:05:00" },
   { id: "SMP-20260928-00892", orderId: "ORD-20260928-00125", type: "Serum", container: "Plain Vacutainer (Red)", volume: "5 mL", collectedBy: "Sarita Kadam", stage: "Test in Progress", department: "Biochemistry", tests: ["TSH", "LIPID"], collectedAt: "2026-09-28T08:05:00" },
   { id: "SMP-20260928-00893", orderId: "ORD-20260928-00124", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "3 mL", collectedBy: "Imran Qureshi", stage: "Result Entered", department: "Biochemistry", tests: ["HBA1C", "VITD"], collectedAt: "2026-09-28T08:30:00" },
-  { id: "SMP-20260928-00894", orderId: "ORD-20260928-00124", type: "Whole Blood Fluoride", container: "Fluoride Oxalate (Grey)", volume: "2 mL", collectedBy: "Imran Qureshi", stage: "Result Entered", department: "Biochemistry", tests: ["FBS"], collectedAt: "2026-09-28T08:30:00" },
+  { id: "SMP-20260928-00894", orderId: "ORD-20260928-00124", type: "Plasma Fluoride", container: "Sodium Fluoride (Grey Top)", volume: "3 mL", collectedBy: "Imran Qureshi", stage: "Result Entered", department: "Biochemistry", tests: ["FBS"], collectedAt: "2026-09-28T08:30:00" },
   { id: "SMP-20260928-00895", orderId: "ORD-20260928-00123", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "3 mL", collectedBy: "Rajesh Malhotra", stage: "Sample Accepted", department: "—", tests: ["CBC", "ESR", "CRP"], collectedAt: "2026-09-28T08:45:00" },
   { id: "SMP-20260928-00896", orderId: "ORD-20260928-00122", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "3 mL", collectedBy: "Mohan Pillai", stage: "Sample Collected", department: "—", tests: ["PKG-SENIOR"], collectedAt: "2026-09-28T09:40:00", remarks: "Home collection — Matunga" },
   { id: "SMP-20260928-00897", orderId: "ORD-20260928-00122", type: "Serum", container: "Plain Vacutainer (Red)", volume: "8 mL", collectedBy: "Mohan Pillai", stage: "Sample Collected", department: "—", tests: ["PKG-SENIOR"], collectedAt: "2026-09-28T09:40:00" },
   { id: "SMP-20260928-00898", orderId: "ORD-20260928-00121", type: "Serum", container: "Plain Vacutainer (Red)", volume: "4 mL", collectedBy: "Rajesh Malhotra", stage: "Verification Pending", department: "Hormones", tests: ["TSH", "FT4"], collectedAt: "2026-09-28T09:55:00" },
   { id: "SMP-20260928-00899", orderId: "ORD-20260928-00120", type: "Serum", container: "Plain Vacutainer (Red)", volume: "6 mL", collectedBy: "Farida Shaikh", stage: "Assigned to Department", department: "Biochemistry", tests: ["LIPID", "FBS", "KFT"], collectedAt: "2026-09-28T10:20:00" },
   { id: "SMP-20260928-00900", orderId: "ORD-20260928-00119", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "3 mL", collectedBy: "Sunita Rane", stage: "In Transit", department: "—", tests: ["PKG-DIABETES"], collectedAt: "2026-09-28T10:45:00" },
-  { id: "SMP-20260928-00901", orderId: "ORD-20260928-00119", type: "Whole Blood Fluoride", container: "Fluoride Oxalate (Grey)", volume: "2 mL", collectedBy: "Sunita Rane", stage: "In Transit", department: "—", tests: ["PKG-DIABETES"], collectedAt: "2026-09-28T10:45:00" },
+  { id: "SMP-20260928-00901", orderId: "ORD-20260928-00119", type: "Plasma Fluoride", container: "Sodium Fluoride (Grey Top)", volume: "3 mL", collectedBy: "Sunita Rane", stage: "In Transit", department: "—", tests: ["PKG-DIABETES"], collectedAt: "2026-09-28T10:45:00" },
   { id: "SMP-20260928-00902", orderId: "ORD-20260928-00118", type: "Serum", container: "Plain Vacutainer (Red)", volume: "4 mL", collectedBy: "Sarita Kadam", stage: "Pickup Requested", department: "—", tests: ["DENGUE-NS1", "WIDAL"], collectedAt: "2026-09-28T11:15:00", remarks: "Fever case — keep 2–8°C" },
   { id: "SMP-20260928-00903", orderId: "ORD-20260928-00117", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "3 mL", collectedBy: "Nitin Wagh", stage: "Picked Up", department: "—", tests: ["CBC", "URINE-R"], collectedAt: "2026-09-28T11:35:00" },
   { id: "SMP-20260927-00885", orderId: "ORD-20260927-00116", type: "Serum", container: "Plain Vacutainer (Red)", volume: "4 mL", collectedBy: "Shyam Sunder Gupta", stage: "Report Delivered", department: "Hormones", tests: ["TSH", "VITB12"], collectedAt: "2026-09-27T09:35:00" },
@@ -129,6 +132,22 @@ export const sampleSeeds: SampleSeed[] = [
   { id: "SMP-20260922-00844", orderId: "ORD-20260923-00103", type: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", volume: "6 mL", collectedBy: "Imran Qureshi", stage: "In Transit", department: "Molecular Biology", tests: ["BRCA"], collectedAt: "2026-09-23T12:20:00", remarks: "For Metropolis dispatch — NGS" },
 ];
 
+// Pre-printed vial barcode numbers recorded at entry (label rolls issued to centres).
+// Keyed by internal sample id — these numbers were scanned/typed by staff, NOT generated by the LIS.
+const SAMPLE_BARCODES: Record<string, string> = {
+  "SMP-20260928-00891": "8210034581", "SMP-20260928-00892": "8210034582",
+  "SMP-20260928-00893": "8210034583", "SMP-20260928-00894": "8210034584",
+  "SMP-20260928-00895": "8210034585", "SMP-20260928-00896": "8210034586",
+  "SMP-20260928-00897": "8210034587", "SMP-20260928-00898": "8210034588",
+  "SMP-20260928-00899": "8210034589", "SMP-20260928-00900": "8210034590",
+  "SMP-20260928-00901": "8210034591", "SMP-20260928-00902": "8210034592",
+  "SMP-20260928-00903": "8210034593", "SMP-20260927-00885": "8210034570",
+  "SMP-20260927-00884": "8210034569", "SMP-20260927-00883": "8210034568",
+  "SMP-20260927-00882": "8210034567", "SMP-20260926-00878": "8210034555",
+  "SMP-20260926-00877": "8210034554", "SMP-20260925-00870": "8210034541",
+  "SMP-20260922-00844": "8210034527",
+};
+
 export const samples: Sample[] = sampleSeeds.map((s) => {
   const o = orders.find((x) => x.id === s.orderId);
   const p = o ? o.patientId : "PAT-00124";
@@ -136,6 +155,8 @@ export const samples: Sample[] = sampleSeeds.map((s) => {
     id: s.id, orderId: s.orderId, patientId: p,
     patientName: "", // filled in data.ts to avoid circular import at module level
     type: s.type, container: s.container, volume: s.volume,
+    barcode: SAMPLE_BARCODES[s.id] ?? "8210034599",
+    barcodeBy: "Scanned / entered at sample entry",
     collectedAt: s.collectedAt ?? "", collectedBy: s.collectedBy,
     source: o ? (o.channel === "B2C" ? "B2C Direct" : o.partnerName ?? "") : "",
     stage: s.stage, department: s.department, condition: s.condition ?? "Good",
@@ -195,6 +216,20 @@ export const pickups: Pickup[] = [
     receivedAt: "2026-09-27T08:40:00",
   },
 ];
+
+// Pre-printed vial barcodes expected on each manifest — the rider reconciles them 1:1 with his scanner
+// at pickup. First entries match the seeded sample barcodes where the tube is tracked in the system.
+const PICKUP_BARCODES: Record<string, string[]> = {
+  "PKP-2026-0187": ["8210034594", "8210034595", "8210034596", "8210034597", "8210034598", "8210034599"],
+  "PKP-2026-0186": ["8210034583", "8210034584", "8210034560", "8210034561", "8210034562", "8210034563"],
+  "PKP-2026-0185": ["8210034590", "8210034591", "8210034575", "8210034576", "8210034577", "8210034578"],
+  "PKP-2026-0184": ["8210034579", "8210034580", "8210034550", "8210034551", "8210034552", "8210034553"],
+  "PKP-2026-0183": ["8210034568", "8210034567", "8210034530", "8210034531", "8210034532", "8210034533"],
+  "PKP-2026-0182": ["8210034520", "8210034521", "8210034522", "8210034523", "8210034524", "8210034525"],
+};
+pickups.forEach((p) => {
+  p.barcodes = PICKUP_BARCODES[p.id] ?? [];
+});
 
 // ---------- Result entry worklist ----------
 export const resultTasks: ResultEntryTask[] = [
@@ -256,8 +291,8 @@ export const verificationTasks: VerificationTask[] = [
 ];
 
 // ---------- Reports registry ----------
-export const reports: LabReport[] = [
-  { id: "REP-2026-001235", orderId: "ORD-20260927-00116", sampleId: "SMP-20260927-00885", patientId: "PAT-00133", status: "Delivered", tests: ["TSH", "VITB12"], department: "Hormones / Biochemistry", pathologist: "Dr. Anjali Deshpande", pathologistQual: "MD (Pathology)", releasedAt: "2026-09-27 18:40", collectedAt: "2026-09-27 09:35", receivedAt: "2026-09-27 11:10", reportedAt: "2026-09-27 18:40", deliveredVia: "B2B Portal", source: "Maa Diagnostics (via ABC Diagnostics)", qrToken: "APX-VER-77QK4M2Z", interpretation: "TSH within normal limits. Vitamin B12 low — supplementation advised; repeat after 8 weeks of therapy.", comments: "Fasting sample received in good condition.", kind: "Numeric" },
+const reportSeeds: Array<Omit<LabReport, "background">> = [
+  { id: "REP-2026-001235", orderId: "ORD-20260928-00116", sampleId: "SMP-20260927-00885", patientId: "PAT-00133", status: "Delivered", tests: ["TSH", "VITB12"], department: "Hormones / Biochemistry", pathologist: "Dr. Anjali Deshpande", pathologistQual: "MD (Pathology)", releasedAt: "2026-09-27 18:40", collectedAt: "2026-09-27 09:35", receivedAt: "2026-09-27 11:10", reportedAt: "2026-09-27 18:40", deliveredVia: "B2B Portal", source: "Maa Diagnostics (via ABC Diagnostics)", qrToken: "APX-VER-77QK4M2Z", interpretation: "TSH within normal limits. Vitamin B12 low — supplementation advised; repeat after 8 weeks of therapy.", comments: "Fasting sample received in good condition.", kind: "Numeric" },
   { id: "REP-2026-001236", orderId: "ORD-20260927-00115", sampleId: "SMP-20260927-00884", patientId: "PAT-00130", status: "Approved", tests: ["PSA"], department: "Hormones", pathologist: "Dr. Anjali Deshpande", pathologistQual: "MD (Pathology)", releasedAt: "2026-09-27 17:20", collectedAt: "2026-09-27 10:15", receivedAt: "2026-09-27 11:30", reportedAt: "2026-09-27 17:20", deliveredVia: "—", source: "ABC Diagnostics", qrToken: "APX-VER-92LM8N4Q", interpretation: "PSA mildly elevated for age. Recommend urological evaluation and repeat with Free PSA ratio.", comments: "", kind: "Numeric" },
   { id: "REP-2026-001237", orderId: "ORD-20260927-00114", sampleId: "SMP-20260927-00883", patientId: "PAT-00136", status: "Delivered", tests: ["CBC"], department: "Haematology", pathologist: "Dr. Anjali Deshpande", pathologistQual: "MD (Pathology)", releasedAt: "2026-09-27 16:05", collectedAt: "2026-09-27 11:00", receivedAt: "2026-09-27 12:20", reportedAt: "2026-09-27 16:05", deliveredVia: "B2B Portal", source: "CityCare Path Labs", qrToken: "APX-VER-15XZ6T8W", interpretation: "Leucocytosis with neutrophilia — suggests bacterial infection. Correlate clinically.", comments: "Peripheral smear reviewed by pathologist.", kind: "Numeric" },
   { id: "REP-2026-001238", orderId: "ORD-20260927-00114", sampleId: "SMP-20260927-00882", patientId: "PAT-00136", status: "Delivered", tests: ["LFT"], department: "Biochemistry", pathologist: "Dr. Vikram Rao", pathologistQual: "MD (Biochemistry), DNB", releasedAt: "2026-09-27 16:30", collectedAt: "2026-09-27 11:00", receivedAt: "2026-09-27 12:20", reportedAt: "2026-09-27 16:30", deliveredVia: "B2B Portal", source: "CityCare Path Labs", qrToken: "APX-VER-63PK9R1V", interpretation: "Isolated SGPT elevation (1.5× ULN). Advise repeat after 4–6 weeks; consider fatty liver workup.", comments: "", kind: "Numeric" },
@@ -266,6 +301,22 @@ export const reports: LabReport[] = [
   { id: "REP-2026-001222", orderId: "ORD-20260924-00105", sampleId: "SMP-20260924-00858", patientId: "PAT-00124", status: "Delivered", tests: ["FBS", "HBA1C"], department: "Biochemistry", pathologist: "Dr. Vikram Rao", pathologistQual: "MD (Biochemistry), DNB", releasedAt: "2026-09-24 19:10", collectedAt: "2026-09-24 09:05", receivedAt: "2026-09-24 10:30", reportedAt: "2026-09-24 19:10", deliveredVia: "Portal", source: "B2C Direct", qrToken: "APX-VER-06BV3L5M", interpretation: "HbA1c 6.1% — pre-diabetes range. Advise MNT referral, 30 min daily activity, repeat HbA1c in 3 months.", comments: "", kind: "Numeric" },
   { id: "REP-2026-001215", orderId: "ORD-20260923-00104", sampleId: "SMP-20260923-00852", patientId: "PAT-00125", status: "Delivered", tests: ["PAP"], department: "Histopathology", pathologist: "Dr. Farida Contractor", pathologistQual: "MD (Pathology), FRCPath", releasedAt: "2026-09-25 12:30", collectedAt: "2026-09-23 13:40", receivedAt: "2026-09-23 15:10", reportedAt: "2026-09-25 12:30", deliveredVia: "B2B Portal", source: "ABC Diagnostics", qrToken: "APX-VER-89QT4D2H", interpretation: "NILM — negative for intraepithelial lesion. Organisms: Candida species seen. Recommend routine screening interval.", comments: "Specimen adequacy: Satisfactory. Endocervical cells present.", kind: "Descriptive" },
 ];
+
+// Report background format — B2C always "With Background"; B2B / Sub-Agency per their order preference
+const REPORT_BACKGROUNDS: Record<string, ReportBackground> = {
+  "REP-2026-001235": "Without Background",
+  "REP-2026-001236": "Without Background",
+  "REP-2026-001237": "Without Background",
+  "REP-2026-001238": "With Background",
+  "REP-2026-001239": "With Background",
+  "REP-2026-001228": "With Background",
+  "REP-2026-001222": "With Background",
+  "REP-2026-001215": "Without Background",
+};
+export const reports: LabReport[] = reportSeeds.map((r) => ({
+  background: REPORT_BACKGROUNDS[r.id] ?? "With Background",
+  ...r,
+}));
 
 // ---------- External reference lab ----------
 export const externalJobs: ExternalJob[] = [

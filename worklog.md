@@ -77,3 +77,33 @@ Work Log:
 
 Stage Summary:
 - ApexLIS UI prototype is COMPLETE and browser-verified: 47 views, 4 portals, all forms and sample reports populated, zero stubs, zero runtime errors.
+
+---
+Task ID: 5
+Agent: main (Super Z) — barcode-first rework per user refinement
+Task: Rework LIS prototype to barcode-scan-driven flow (no barcode generation), vial/volume guidance from test master, with/without background reports (B2C locked), logistics scan pickup; fees/wallet secondary.
+
+Work Log:
+- types.ts: added Sample.barcode/barcodeBy (pre-printed vial barcode recorded by scan/entry), TestMaster.sampleVolume, Order.reportPreference, LabReport.background, Pickup.barcodes, ReportBackground type.
+- data-core.ts: tests rebuilt via testSeeds + TEST_VOLUMES map (CBC EDTA 5 mL, FBS plasma fluoride 3 mL, etc.); FBS sample type → "Plasma Fluoride" / "Sodium Fluoride (Grey Top)"; added PREPRINTED_LABELS pool (8210034601+) + nextPreprintedLabel helper.
+- data-ops.ts: 21 seeded sample barcodes; order reportPreference (B2C always With Background; B2B/SUB mix); report background map; full pickup barcode manifests (6 per manifest, consistent with seeded tubes).
+- data.ts: sampleByBarcode(), requiredVials() (tests/packages → grouped vials with container/sampleType/volume).
+- widgets.tsx: SampleLabelCard now renders the scanned pre-printed barcode (+ internal ref line).
+- NEW vial-entry.tsx: VialBarcodeStep (policy banner, vial guidance cards, scan/type input, Simulate scanner, duplicate validation, progress), VialGuidanceList, ReportFormatField (B2C locked radio), VialSummaryChip.
+- admin/order-new.tsx: new step "Sample Tubes & Vial Barcodes" (5-step wizard), continue gated on all barcodes recorded, payment step locks recorded barcodes, success shows per-tube label slips.
+- b2b/order-new.tsx + agency/order-new.tsx: same step wired with partner/agency wording + report format choice.
+- admin/receiving.tsx: scan resolves vial barcode first (sample ID/manifest fallback); barcode column + rows.
+- admin/samples.tsx: vial barcode column/search + chain-of-custody sheet keyed by barcode.
+- admin/logistics.tsx: "Operator Pickup — Barcode Scan" dialog (manifest checklist, scan input + Simulate, OK/Damaged/Missing marks, progress, complete → picked-up summary).
+- report-sheet.tsx: LabReportDocument renders With/Without Background (compact drops ranges/method/interpretation + explanatory note); ReportDialog has With/Without toggle + B2C lock badge; toReportView carries background.
+- Reports views: admin (Format column, toggle, B2C rows locked), b2b (toggle + explainer), agency (toggle + explainer), patient (locked).
+- masters-tests.tsx: Required Volume field + Container·Volume column + live operator-guidance preview in test dialog.
+- landing.tsx: barcode-first hero + policy explainer.
+- Fixed pre-existing data bug: REP-2026-001235 orderId 20260927→20260928 (patient name showed "—").
+- Verification: agent-browser — admin order flow end-to-end (barcode step, simulate scan, gating, success slips), logistics scan (6/6 reconcile → Picked Up), report toggle (compact mode verified) + B2C lock, receiving scan 8210034590→SMP-00900, B2B vial guidance incl. Sugar→Sodium Fluoride 3 mL, mobile 390px OK; tsc 0 src errors; eslint clean; dev.log clean.
+
+Stage Summary:
+- Full process is now barcode-enabled with pre-printed labels only; system never generates barcodes.
+- Vial/volume guidance (Sugar→NaF 3 mL, CBC→EDTA 5 mL) shown at entry, driven by admin test master.
+- B2B & Sub-Agency report generation supports With/Without Background; B2C always With Background.
+- Logistics operator picks up samples via barcode scan with manifest reconciliation and exceptions.

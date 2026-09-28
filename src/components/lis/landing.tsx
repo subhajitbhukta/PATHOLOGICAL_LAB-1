@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useLisNav } from "@/components/lis/nav";
 import { patients } from "@/lib/lis/data";
 import {
-  ArrowRight, Building2, FlaskConical, HeartPulse, Network, ShieldCheck, Store,
+  ArrowRight, Building2, FlaskConical, HeartPulse, Network, ScanLine, ShieldCheck, Store,
 } from "lucide-react";
 
 const PORTALS = [
@@ -92,8 +92,9 @@ export function LandingHub() {
             One platform for your entire <span className="text-teal-700">referral lab network</span>
           </h1>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-            Registration, hierarchical pricing, sample tracking, result entry, pathologist verification, QR-verified
-            reports and multi-level billing — in one continuous, traceable workflow.
+            Barcode-scan driven test entry, vial &amp; volume guidance, hierarchical pricing, sample tracking, result
+            entry, pathologist verification, QR-verified reports and multi-level billing — one continuous,
+            traceable workflow.
             <span className="mt-1 block text-xs">UI prototype · choose a portal below to explore (demo credentials pre-filled)</span>
           </p>
         </div>
@@ -149,7 +150,20 @@ export function LandingHub() {
           })}
         </div>
 
-        <div className="mx-auto mt-12 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="mx-auto mt-12 max-w-4xl rounded-2xl border border-teal-200 bg-teal-50/50 p-5">
+          <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <ScanLine className="h-4 w-4 text-teal-700" /> Barcode-first · vial-guided · the LIS never generates barcodes
+          </p>
+          <p className="mt-2 text-xs leading-relaxed text-slate-600">
+            Every tube carries a <b>pre-printed barcode label</b>. At entry the operator is guided by the test master —
+            e.g. <b>Sugar → Plasma in Sodium Fluoride (Grey) vial · 3 mL</b>, <b>CBC → Whole Blood in EDTA (Lavender) vial · 5 mL</b> —
+            then scans or types the vial’s barcode. The rider <b>scans each tube at pickup</b>, receiving verifies it against
+            the order, and departments track it to the result. B2B &amp; Sub-Agency orders can be reported
+            <b> with or without technical background</b>; B2C reports always carry the full background.
+          </p>
+        </div>
+
+        <div className="mx-auto mt-6 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5">
           <p className="flex items-center gap-2 text-sm font-semibold text-slate-800">
             <FlaskConical className="h-4 w-4 text-teal-700" /> The key differentiator — one continuous transaction
           </p>

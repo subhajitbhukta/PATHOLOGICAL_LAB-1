@@ -58,7 +58,8 @@ export function AdminSamplesView() {
   );
 
   const columns: Column<Sample>[] = [
-    { key: "id", header: "Sample ID", value: (r) => r.id, render: (r) => <span className="font-mono text-xs font-medium text-teal-800">{r.id}</span> },
+    { key: "bc", header: "Vial Barcode", value: (r) => r.barcode, render: (r) => <span className="font-mono text-xs font-medium text-teal-800">{r.barcode}</span> },
+    { key: "id", header: "Sample ID", value: (r) => r.id, render: (r) => <span className="font-mono text-[10px] text-slate-500">{r.id}</span> },
     { key: "order", header: "Order ID", value: (r) => r.orderId, render: (r) => <span className="font-mono text-xs text-slate-600">{r.orderId}</span> },
     { key: "patient", header: "Patient", value: (r) => r.patientName, render: (r) => <span className="text-sm font-medium">{r.patientName}</span> },
     { key: "type", header: "Type / Container", value: (r) => `${r.type} ${r.container}`, render: (r) => (
@@ -101,8 +102,8 @@ export function AdminSamplesView() {
           columns={columns}
           rows={rows}
           pageSize={10}
-          searchOf={(r) => `${r.id} ${r.orderId} ${r.patientName} ${r.type} ${r.container} ${r.collectedBy} ${r.source}`}
-          searchPlaceholder="Search sample / patient / order…"
+          searchOf={(r) => `${r.barcode} ${r.id} ${r.orderId} ${r.patientName} ${r.type} ${r.container} ${r.collectedBy} ${r.source}`}
+          searchPlaceholder="Scan / search vial barcode, patient, order…"
           onRowClick={(r) => setSelected(r)}
           filters={
             <Select value={stage} onValueChange={setStage}>
@@ -129,9 +130,9 @@ export function AdminSamplesView() {
               <SheetHeader className="border-b px-5 py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <SheetTitle className="font-mono text-sm">{selected.id}</SheetTitle>
+                    <SheetTitle className="font-mono text-sm">{selected.barcode}</SheetTitle>
                     <p className="text-xs text-muted-foreground">
-                      {selected.patientName} · {orderAgeSex(selected.orderId)} · {selected.type}
+                      {selected.id} · {selected.patientName} · {orderAgeSex(selected.orderId)} · {selected.type}
                     </p>
                   </div>
                   <StatusPill status={selected.stage} />
@@ -151,12 +152,14 @@ export function AdminSamplesView() {
                 <KeyValue
                   cols={3}
                   items={[
+                    { label: "Vial Barcode", value: <span className="font-mono text-xs font-semibold text-teal-800">{selected.barcode}</span> },
+                    { label: "Barcode Recorded", value: selected.barcodeBy ?? "Scanned at entry" },
+                    { label: "Volume", value: selected.volume },
                     { label: "Collected At", value: fmtDateTime(selected.collectedAt) },
                     { label: "Collected By", value: selected.collectedBy },
-                    { label: "Volume", value: selected.volume },
+                    { label: "Condition", value: <StatusPill status={selected.condition} /> },
                     { label: "Received At", value: selected.receivedAt ? fmtDateTime(selected.receivedAt) : "—" },
                     { label: "Received By", value: selected.receivedBy ?? "—" },
-                    { label: "Condition", value: <StatusPill status={selected.condition} /> },
                     { label: "Department", value: selected.department === "—" ? "Not assigned" : selected.department },
                     { label: "Source", value: selected.source || "—" },
                     { label: "Order", value: <span className="font-mono text-xs">{selected.orderId}</span> },
@@ -170,9 +173,10 @@ export function AdminSamplesView() {
                   </div>
                 </div>
 
-                <Panel title="Barcode Label" description="Reprint for relabelling / transit pouch">
+                <Panel title="Barcode Label Slip" description="Pre-printed vial barcode recorded at entry — reprint as info slip">
                   <SampleLabelCard
                     sampleId={selected.id}
+                    barcode={selected.barcode}
                     patientName={selected.patientName}
                     ageSex={orderAgeSex(selected.orderId)}
                     type={selected.type}

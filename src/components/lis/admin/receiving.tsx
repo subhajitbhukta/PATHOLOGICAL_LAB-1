@@ -9,11 +9,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DataTable, PageHeader, Panel, StatCard, StatusPill } from "@/components/lis/widgets";
 import type { Column } from "@/components/lis/widgets";
 import { fmtTime } from "@/lib/lis/format";
-import { patientById, pickups, sampleById, samples, today } from "@/lib/lis/data";
+import { patientById, pickups, sampleByBarcode, sampleById, samples, today } from "@/lib/lis/data";
 import { CheckCircle2, PackageCheck, ScanLine, XCircle } from "lucide-react";
 import type { Sample } from "@/lib/lis/types";
 
-const DEFAULT_SCAN = "SMP-20260928-00895";
+const DEFAULT_SCAN = "8210034585"; // pre-printed vial barcode of the next expected tube
 const CONDITIONS: Sample["condition"][] = ["Good", "Damaged", "Leaking", "Insufficient"];
 
 export function AdminReceivingView() {
@@ -53,15 +53,23 @@ export function AdminReceivingView() {
     const raw = scanInput.trim();
     let id = DEFAULT_SCAN;
     if (raw) {
-      const pk = pickups.find((p) => p.manifestNo.toLowerCase() === raw.toLowerCase());
-      const cand = pk ? pk.samples.find((sid) => sampleById(sid)) : raw;
-      if (cand && sampleById(cand)) id = cand;
+      // 1) by pre-printed vial barcode (primary — full process is barcode enabled)
+      const byBarcode = sampleByBarcode(raw);
+      if (byBarcode) {
+        id = byBarcode.id;
+      } else {
+        // 2) fallback: sample ID, or a manifest number that pulls its first tube
+        const pk = pickups.find((p) => p.manifestNo.toLowerCase() === raw.toLowerCase());
+        const cand = pk ? pk.samples.find((sid) => sampleById(sid)) : raw;
+        if (cand && sampleById(cand)) id = cand;
+      }
     }
     loadId(id);
   };
 
   const queueColumns: Column<Sample>[] = [
-    { key: "id", header: "Sample ID", value: (r) => r.id, render: (r) => <span className="font-mono text-xs font-medium text-teal-800">{r.id}</span> },
+    { key: "bc", header: "Vial Barcode", value: (r) => r.barcode, render: (r) => <span className="font-mono text-xs font-medium text-teal-800">{r.barcode}</span> },
+    { key: "id", header: "Sample ID", value: (r) => r.id, render: (r) => <span className="font-mono text-[10px] text-slate-500">{r.id}</span> },
     { key: "patient", header: "Patient", value: (r) => r.patientName, render: (r) => <span className="text-sm">{r.patientName}</span> },
     { key: "type", header: "Type", value: (r) => r.type, render: (r) => <span className="text-xs text-muted-foreground">{r.type}</span> },
     { key: "src", header: "Source", value: (r) => r.source, render: (r) => <span className="text-xs text-muted-foreground">{r.source || "—"}</span> },
@@ -72,7 +80,7 @@ export function AdminReceivingView() {
     <div className="space-y-5">
       <PageHeader
         title="Lab Receiving"
-        subtitle="Scan, verify and accept incoming samples against manifests"
+        subtitle="Scan the pre-printed vial barcode, verify against the order, accept or reject"
         icon={<ScanLine className="h-5 w-5" />}
       />
 
@@ -91,7 +99,7 @@ export function AdminReceivingView() {
               value={scanInput}
               onChange={(e) => setScanInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleScan()}
-              placeholder="Scan barcode / manifest no. e.g. MAN-2026-0340 or SMP-20260928-00895"
+              placeholder="Scan vial barcode (e.g. 8210034585) / sample ID / manifest no."
               className="h-11 font-mono text-sm"
             />
             <Button className="h-11 bg-teal-600 px-6 text-white hover:bg-teal-700" onClick={handleScan}>
@@ -104,7 +112,7 @@ export function AdminReceivingView() {
               <CheckCircle2 className="h-4 w-4" />
               <AlertTitle>Sample accepted</AlertTitle>
               <AlertDescription>
-                {smp.id} logged as received · {smp.tests.length} test(s) pushed to department worklists · Received by Vijay Thorat (Receiving).
+                Vial barcode {smp.barcode} ({smp.id}) logged as received · {smp.tests.length} test(s) pushed to department worklists · Received by Vijay Thorat (Receiving).
               </AlertDescription>
             </Alert>
           ) : null}
@@ -113,7 +121,7 @@ export function AdminReceivingView() {
               <XCircle className="h-4 w-4" />
               <AlertTitle>Sample rejected</AlertTitle>
               <AlertDescription>
-                {smp.id} marked rejected ({condition.toLowerCase()}) · recollection request raised and source centre notified.
+                Vial barcode {smp.barcode} ({smp.id}) marked rejected ({condition.toLowerCase()}) · recollection request raised and source centre notified.
               </AlertDescription>
             </Alert>
           ) : null}
@@ -122,9 +130,9 @@ export function AdminReceivingView() {
             <div className="mt-4 space-y-4 rounded-lg border border-slate-200 bg-white p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <p className="font-mono text-sm font-semibold text-teal-800">{smp.id}</p>
+                  <p className="font-mono text-sm font-semibold text-teal-800">Vial barcode {smp.barcode}</p>
                   <p className="text-xs text-muted-foreground">
-                    {smp.patientName} · {patient ? `${patient.age}y / ${patient.gender === "Male" ? "M" : "F"}` : "—"} · {smp.type} · {smp.container}
+                    {smp.id} · {smp.patientName} · {patient ? `${patient.age}y / ${patient.gender === "Male" ? "M" : "F"}` : "—"} · {smp.type} · {smp.container}
                   </p>
                 </div>
                 <StatusPill status={smp.stage} />
@@ -191,10 +199,10 @@ export function AdminReceivingView() {
               rows={queue}
               pageSize={5}
               dense
-              searchOf={(r) => `${r.id} ${r.patientName} ${r.source}`}
-              searchPlaceholder="Search queue…"
+              searchOf={(r) => `${r.barcode} ${r.id} ${r.patientName} ${r.source}`}
+              searchPlaceholder="Search barcode / patient…"
               onRowClick={(r) => {
-                setScanInput(r.id);
+                setScanInput(r.barcode);
                 loadId(r.id);
               }}
             />
@@ -205,7 +213,7 @@ export function AdminReceivingView() {
               {receivedToday.map((s) => (
                 <li key={s.id} className="flex items-center justify-between gap-2 rounded-lg border border-slate-100 px-2.5 py-2">
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-xs font-medium text-slate-800">{s.id}</p>
+                    <p className="truncate font-mono text-xs font-medium text-slate-800">{s.barcode}</p>
                     <p className="truncate text-[11px] text-muted-foreground">
                       {s.patientName} · {s.tests.join(", ")}
                     </p>

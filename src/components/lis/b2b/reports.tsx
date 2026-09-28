@@ -11,7 +11,7 @@ import {
 import type { Column } from "@/components/lis/widgets";
 import { ReportDialog, ReportShareActions, toReportView } from "@/components/lis/report-sheet";
 import type { ReportViewData } from "@/components/lis/report-sheet";
-import type { LabReport } from "@/lib/lis/types";
+import type { LabReport, ReportBackground } from "@/lib/lis/types";
 import { Eye, FileText, Send, ShieldCheck } from "lucide-react";
 
 // ============================================================
@@ -31,6 +31,9 @@ export function B2bReportsView() {
   const open = (r: LabReport) => {
     setReport(toReportView(r, orderPatientName(r.orderId), orderAgeSex(r.orderId)));
   };
+
+  const changeFormat = (v: ReportBackground) =>
+    setReport((cur) => (cur ? { ...cur, background: v } : cur));
 
   const columns: Column<LabReport>[] = [
     {
@@ -52,6 +55,11 @@ export function B2bReportsView() {
       render: (r) => <span className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(r.releasedAt)}</span>,
     },
     { key: "via", header: "Delivered Via", value: (r) => r.deliveredVia, render: (r) => <span className="text-xs">{r.deliveredVia}</span> },
+    { key: "fmt", header: "Format", value: (r) => r.background, render: (r) => (
+      <span className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${r.background === "Without Background" ? "border-slate-300 text-slate-500" : "border-teal-300 text-teal-700"}`}>
+        {r.background === "Without Background" ? "Without" : "With Background"}
+      </span>
+    ) },
     { key: "status", header: "Status", value: (r) => r.status, render: (r) => <StatusPill status={r.status} /> },
     {
       key: "act", header: "Actions",
@@ -81,6 +89,12 @@ export function B2bReportsView() {
             Reports approved by Apex pathologists are auto-published to this portal the moment they are signed —
             no manual follow-up needed. Every PDF carries a QR code your patients can verify at verify.apexlabs.in.
           </p>
+          <p className="mt-1 text-xs leading-relaxed">
+            <span className="font-semibold">Report format:</span> as a B2B partner you may download each report
+            <span className="font-medium"> With Background</span> (ranges, method, interpretation) or
+            <span className="font-medium"> Without Background</span> (compact results table) — switch it in the preview
+            before printing. B2C patient copies always carry the background.
+          </p>
         </div>
       </div>
 
@@ -102,7 +116,7 @@ export function B2bReportsView() {
         />
       </Panel>
 
-      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} />
+      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} onFormatChange={changeFormat} />
 
       <p className="text-center text-xs text-muted-foreground">
         Need older reports? Contact your Apex account manager or view the full history in{" "}

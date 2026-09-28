@@ -118,7 +118,7 @@ export function PatientReportsView() {
         </Panel>
       </div>
 
-      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} />
+      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} formatLocked />
     </div>
   );
 }

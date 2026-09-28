@@ -17,14 +17,29 @@ import type { Column } from "@/components/lis/widgets";
 import { ManifestSheet } from "@/components/lis/report-sheet";
 import { couriers, partners, pickups, subAgencies, today } from "@/lib/lis/data";
 import { fmtDateTime, maskMobile } from "@/lib/lis/format";
-import { Plus, Printer, Truck } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AlertTriangle, CheckCircle2, Plus, Printer, ScanLine, Truck, XCircle } from "lucide-react";
 import type { Pickup } from "@/lib/lis/types";
+
+type ScanMark = "ok" | "damaged" | "missing";
+const SCAN_MARKS: { value: ScanMark; label: string; icon: React.ElementType; cls: string }[] = [
+  { value: "ok", label: "OK", icon: CheckCircle2, cls: "text-emerald-600" },
+  { value: "damaged", label: "Damaged", icon: AlertTriangle, cls: "text-amber-600" },
+  { value: "missing", label: "Missing", icon: XCircle, cls: "text-rose-500" },
+];
 
 const PICKUP_FLOW: Pickup["status"][] = ["Requested", "Assigned", "Picked Up", "In Transit", "Received at Lab"];
 
 export function AdminLogisticsView() {
   const [selected, setSelected] = React.useState<Pickup | null>(null);
   const [manifest, setManifest] = React.useState<Pickup | null>(null);
+
+  // Operator pickup — barcode scan reconciliation
+  const [scanPickup, setScanPickup] = React.useState<Pickup | null>(null);
+  const [scanMarks, setScanMarks] = React.useState<Record<string, ScanMark>>({});
+  const [scanInput, setScanInput] = React.useState("");
+  const [scanError, setScanError] = React.useState<string | null>(null);
+  const [scanDone, setScanDone] = React.useState(false);
 
   // New pickup request dialog state
   const [npOpen, setNpOpen] = React.useState(false);
@@ -83,6 +98,35 @@ export function AdminLogisticsView() {
     setNpDone(false);
     setNpOpen(true);
   };
+
+  // ---- operator pickup scan flow ----
+  const openScan = (p: Pickup) => {
+    setScanMarks({}); // start empty — operator must scan/type each pre-printed barcode
+    setScanInput("");
+    setScanError(null);
+    setScanDone(false);
+    setScanPickup(p);
+  };
+
+  const expected = scanPickup?.barcodes ?? [];
+  const okCount = expected.filter((b) => scanMarks[b] === "ok").length;
+  const damagedCount = expected.filter((b) => scanMarks[b] === "damaged").length;
+  const missingCount = expected.filter((b) => scanMarks[b] === "missing").length;
+  const allScanned = expected.length > 0 && okCount + damagedCount + missingCount === expected.length;
+
+  const applyScan = (raw: string) => {
+    const code = raw.trim();
+    if (!code || !scanPickup) return;
+    if (!expected.includes(code)) {
+      setScanError(`Barcode ${code} is NOT on manifest ${scanPickup.manifestNo} — check the tube or key the number manually.`);
+      return;
+    }
+    setScanError(null);
+    setScanMarks((m) => ({ ...m, [code]: "ok" }));
+    setScanInput("");
+  };
+
+  const nextUnscanned = expected.find((b) => !scanMarks[b]);
 
   return (
     <div className="space-y-5">
@@ -147,8 +191,24 @@ export function AdminLogisticsView() {
                     {selected.samples.map((s, i) => (
                       <div key={`${s}-${i}`} className="rounded border border-slate-200 px-2 py-1 font-mono text-[11px] text-slate-700">
                         {s}
+                        {selected.barcodes?.[i] ? <span className="ml-1 text-[10px] text-teal-700">· {selected.barcodes[i]}</span> : null}
                       </div>
                     ))}
+                  </div>
+                </Panel>
+
+                <Panel title="Operator Pickup — Barcode Scan" description="The rider reconciles every pre-printed vial barcode against this manifest">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-slate-700">Scanned {okCount + damagedCount + missingCount} / {selected.barcodes?.length ?? selected.sampleCount}</span>
+                      <StatusPill status={selected.barcodes && Object.keys(scanMarks).length === selected.barcodes.length && okCount === selected.barcodes.length ? "Picked Up" : "Assigned"} />
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-teal-500 transition-all" style={{ width: `${((okCount + damagedCount + missingCount) / Math.max(1, selected.barcodes?.length ?? 1)) * 100}%` }} />
+                    </div>
+                    <Button size="sm" className="bg-teal-600 text-white hover:bg-teal-700" onClick={() => openScan(selected)}>
+                      <ScanLine className="mr-1.5 h-4 w-4" /> Open Pickup Scanner
+                    </Button>
                   </div>
                 </Panel>
 
@@ -237,6 +297,122 @@ export function AdminLogisticsView() {
                   Create Request
                 </Button>
               </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Operator pickup scanner */}
+      <Dialog open={!!scanPickup} onOpenChange={(o) => !o && setScanPickup(null)}>
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Operator Pickup — Scan Vial Barcodes</DialogTitle>
+            <DialogDescription>
+              {scanPickup ? `${scanPickup.manifestNo} · ${scanPickup.requestedBy} · rider ${scanPickup.riderName}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+          {scanDone ? (
+            <div className="space-y-4">
+              <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800">
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertTitle>Pickup completed &amp; manifest reconciled</AlertTitle>
+                <AlertDescription>
+                  {scanPickup?.manifestNo}: {okCount} tube(s) scanned OK
+                  {damagedCount ? `, ${damagedCount} damaged` : ""}{missingCount ? `, ${missingCount} missing` : ""}.
+                  Status moved to <b>Picked Up</b> and the exception list was shared with {scanPickup?.requestedBy}.
+                </AlertDescription>
+              </Alert>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setScanPickup(null)}>Close</Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-900">
+                The system does not generate barcodes — every tube already carries a <b>pre-printed label</b>.
+                The operator scans each one; the LIS matches it 1:1 against the manifest and flags exceptions.
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Input
+                  value={scanInput}
+                  onChange={(e) => { setScanInput(e.target.value); setScanError(null); }}
+                  onKeyDown={(e) => e.key === "Enter" && applyScan(scanInput)}
+                  placeholder="Scan or type vial barcode…"
+                  className="h-11 font-mono text-sm"
+                  autoFocus
+                />
+                <Button className="h-11 bg-teal-600 px-5 text-white hover:bg-teal-700" onClick={() => applyScan(scanInput)}>
+                  <ScanLine className="mr-1.5 h-4 w-4" /> Scan
+                </Button>
+                {nextUnscanned ? (
+                  <Button variant="outline" className="h-11" onClick={() => applyScan(nextUnscanned)} title="Demo: simulate a scanner read">
+                    Simulate
+                  </Button>
+                ) : null}
+              </div>
+              {scanError ? (
+                <p className="flex items-center gap-1.5 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-medium text-rose-700">
+                  <XCircle className="h-3.5 w-3.5" /> {scanError}
+                </p>
+              ) : null}
+
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-700">Manifest checklist</span>
+                  <span className="text-muted-foreground">{expected.length} expected · {okCount} ok · {damagedCount} damaged · {missingCount} missing</span>
+                </div>
+                <div className="max-h-56 space-y-1 overflow-y-auto rounded-lg border p-1.5">
+                  {expected.map((b) => {
+                    const mark = scanMarks[b] ?? "missing";
+                    const meta = SCAN_MARKS.find((m) => m.value === mark)!;
+                    return (
+                      <div key={b} className={cn(
+                        "flex items-center justify-between gap-2 rounded-md border px-2.5 py-1.5",
+                        mark === "ok" && "border-emerald-200 bg-emerald-50/60",
+                        mark === "damaged" && "border-amber-200 bg-amber-50/60",
+                        mark === "missing" && "border-rose-200 bg-rose-50/50",
+                      )}>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <meta.icon className={cn("h-4 w-4 shrink-0", meta.cls)} />
+                          <span className="truncate font-mono text-xs font-medium text-slate-800">{b}</span>
+                        </span>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {SCAN_MARKS.map((m) => (
+                            <button
+                              key={m.value}
+                              onClick={() => setScanMarks((cur) => ({ ...cur, [b]: m.value }))}
+                              className={cn(
+                                "rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                                mark === m.value
+                                  ? mark === "ok" ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                                    : mark === "damaged" ? "border-amber-300 bg-amber-100 text-amber-800"
+                                    : "border-rose-300 bg-rose-100 text-rose-700"
+                                  : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50",
+                              )}
+                            >
+                              {m.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className={cn("text-[11px]", allScanned ? "text-emerald-700" : "text-amber-700")}>
+                  {allScanned ? "All tubes reconciled — ready to complete pickup." : "Scan every tube, or mark damaged / missing exceptions."}
+                </p>
+                <Button
+                  className="bg-teal-600 text-white hover:bg-teal-700"
+                  disabled={!allScanned}
+                  onClick={() => setScanDone(true)}
+                >
+                  <Truck className="mr-1.5 h-4 w-4" /> Complete Pickup
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

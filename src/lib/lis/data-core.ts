@@ -35,7 +35,7 @@ export const departments: Department[] = [
 
 export const sampleTypes: SampleType[] = [
   { id: "ST-01", name: "Whole Blood EDTA", abbreviation: "WB-EDTA", container: "EDTA Vacutainer (Lavender)", fasting: "Not required", notes: "Invert 8–10 times immediately after collection" },
-  { id: "ST-02", name: "Whole Blood Fluoride", abbreviation: "WB-FL", container: "Fluoride Oxalate (Grey)", fasting: "8–10 hrs fasting", notes: "For glucose / HbA1c estimation" },
+  { id: "ST-02", name: "Plasma Fluoride", abbreviation: "PL-FL", container: "Sodium Fluoride (Grey Top)", fasting: "8–10 hrs fasting", notes: "For sugar / glucose estimation — plasma separated from fluoride vial" },
   { id: "ST-03", name: "Serum", abbreviation: "SER", container: "Plain Vacutainer (Red)", fasting: "10–12 hrs for lipids", notes: "Allow 30 min clotting, centrifuge 3000 rpm" },
   { id: "ST-04", name: "Plasma Citrate", abbreviation: "PC", container: "Sodium Citrate (Blue)", fasting: "Not required", notes: "Fill to 100% draw mark, for coagulation" },
   { id: "ST-05", name: "Urine (Random)", abbreviation: "UR", container: "Sterile Container", fasting: "Not required", notes: "Midstream clean catch preferred" },
@@ -57,7 +57,21 @@ export const containers: ContainerType[] = [
   { id: "CT-08", name: "VTM Swab", color: "Red cap", additive: "Viral Transport Medium", volume: "3 mL", stock: 240 },
 ];
 
-export const tests: TestMaster[] = [
+// Required fill volume per test — specified by admin in this master.
+// Entry screens show it as guidance: "Sugar → Plasma Fluoride in Sodium Fluoride (Grey Top) · 3 mL",
+// "CBC → Whole Blood EDTA in EDTA Vacutainer (Lavender) · 5 mL", etc.
+const TEST_VOLUMES: Record<string, string> = {
+  CBC: "5 mL", ESR: "5 mL", HBA1C: "3 mL", FBS: "3 mL", "INSULIN-F": "4 mL",
+  TSH: "5 mL", FT4: "5 mL", PSA: "5 mL", LFT: "8 mL", KFT: "8 mL", LIPID: "8 mL",
+  VITD: "5 mL", VITB12: "5 mL", FERR: "5 mL", CRP: "5 mL", PROCALC: "5 mL",
+  WIDAL: "5 mL", "DENGUE-NS1": "5 mL", HBSAG: "5 mL", HIV: "5 mL", "HLA-B27": "5 mL",
+  "URINE-R": "10 mL", "CULTURE-UR": "10 mL", AFB: "5 mL", TRUGENE: "4 mL", BRCA: "6 mL",
+  BIOPSY: "As obtained", PAP: "As obtained",
+};
+
+type TestSeed = Omit<TestMaster, "sampleVolume"> & { sampleVolume?: string };
+
+const testSeeds: TestSeed[] = [
   {
     code: "CBC", name: "Complete Blood Count (CBC)", shortName: "CBC", department: "Haematology",
     sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "Flow Cytometry + Impedance",
@@ -124,7 +138,7 @@ export const tests: TestMaster[] = [
   },
   {
     code: "FBS", name: "Fasting Blood Sugar (Glucose Fasting)", shortName: "FBS", department: "Biochemistry",
-    sampleType: "Whole Blood Fluoride", container: "Fluoride Oxalate (Grey)", methodology: "Hexokinase UV",
+    sampleType: "Plasma Fluoride", container: "Sodium Fluoride (Grey Top)", methodology: "Hexokinase UV",
     unit: "mg/dL", tatHours: 4, resultType: "Numeric", b2cPrice: 120, group: "Diabetes", status: "Active",
     refRanges: [
       { sex: "Any", ageGroup: "Adult", range: "70 – 100" },
@@ -263,6 +277,19 @@ export const tests: TestMaster[] = [
     refRanges: [{ sex: "Male", ageGroup: "Adult (>40 yr)", range: "0 – 4.0" }],
   },
 ];
+
+export const tests: TestMaster[] = testSeeds.map((t) => ({
+  sampleVolume: TEST_VOLUMES[t.code] ?? "5 mL",
+  ...t,
+}));
+
+// Pool of PRE-PRINTED barcode label numbers (label rolls supplied to collection centres & phlebotomists).
+// The LIS never generates barcodes — during entry the operator scans or types the number printed
+// on the physical vial label, and the system records that number against the tube.
+export const PREPRINTED_LABELS: string[] = Array.from({ length: 48 }, (_, i) => String(8210034601 + i));
+
+export const nextPreprintedLabel = (used: string[]): string =>
+  PREPRINTED_LABELS.find((l) => !used.includes(l)) ?? PREPRINTED_LABELS[0];
 
 export const testGroups: TestGroup[] = [
   { id: "TG-01", name: "Routine Haematology", description: "CBC, ESR, Peripheral Smear and coagulation assays", tests: ["CBC", "ESR"], status: "Active" },

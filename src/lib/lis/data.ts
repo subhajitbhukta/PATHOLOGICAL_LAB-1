@@ -1,6 +1,6 @@
 import type { Order, OrderStatus, Patient, Sample } from "./types";
 import { INTERNAL_FLOW } from "./types";
-import { patients, tests, priceRules } from "./data-core";
+import { patients, tests, packages, priceRules } from "./data-core";
 import { orders, samples, reports, patientStageIndex } from "./data-ops";
 
 // Fill patient names into samples
@@ -58,6 +58,49 @@ export const kpi = {
 
 export const samplesForOrder = (orderId: string): Sample[] => samples.filter((s) => s.orderId === orderId);
 export const reportsForOrder = (orderId: string) => reports.filter((r) => r.orderId === orderId);
+
+// Barcode-first lookups — the LIS does not generate barcodes, staff scan/enter the
+// pre-printed vial label number and the system resolves it to the tube.
+export const sampleByBarcode = (barcode: string): Sample | undefined =>
+  samples.find((s) => s.barcode === barcode.trim());
+
+// Resolves selected tests/packages into the physical vials that must be drawn,
+// using the sample type / container / volume specified by admin in the test master.
+export interface RequiredVial {
+  key: string;            // container name — one tube per container type
+  container: string;
+  sampleType: string;
+  volume: string;         // largest required fill volume on this tube
+  tests: string[];        // test codes served by this tube
+  packageCodes?: string[];
+}
+
+export const requiredVials = (codes: string[]): RequiredVial[] => {
+  const byContainer = new Map<string, RequiredVial>();
+  const expand = (code: string, pkg?: string) => {
+    const t = tests.find((x) => x.code === code);
+    if (!t) return;
+    const cur = byContainer.get(t.container);
+    if (cur) {
+      if (!cur.tests.includes(t.code)) cur.tests.push(t.code);
+      if (pkg && !(cur.packageCodes ?? []).includes(pkg)) (cur.packageCodes ??= []).push(pkg);
+      const curMl = parseFloat(cur.volume) || 0;
+      const newMl = parseFloat(t.sampleVolume) || 0;
+      if (newMl > curMl) cur.volume = t.sampleVolume;
+    } else {
+      byContainer.set(t.container, {
+        key: t.container, container: t.container, sampleType: t.sampleType,
+        volume: t.sampleVolume, tests: [t.code], packageCodes: pkg ? [pkg] : undefined,
+      });
+    }
+  };
+  for (const code of codes) {
+    const pkg = packages.find((p) => p.code === code);
+    if (pkg) pkg.tests.forEach((tc) => expand(tc, code));
+    else expand(code);
+  }
+  return Array.from(byContainer.values());
+};
 
 // Reports visible to a B2B partner (their own patients only)
 export const reportsForPartner = (partnerId: string): LabReportT[] =>

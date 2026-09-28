@@ -11,9 +11,9 @@ import type { Column } from "@/components/lis/widgets";
 import { ReportDialog, ReportShareActions, toReportView } from "@/components/lis/report-sheet";
 import type { ReportViewData } from "@/components/lis/report-sheet";
 import { fmtDateTime } from "@/lib/lis/format";
-import { departments, orderAgeSex, orderPatientName, reports } from "@/lib/lis/data";
+import { departments, orderAgeSex, orderById, orderPatientName, reports } from "@/lib/lis/data";
 import { FileText, QrCode, Share2 } from "lucide-react";
-import type { LabReport } from "@/lib/lis/types";
+import type { LabReport, ReportBackground } from "@/lib/lis/types";
 
 const VIA_LABELS: Record<string, string> = {
   "Portal": "Patient Portal",
@@ -28,6 +28,7 @@ export function AdminReportsView() {
   const [dept, setDept] = React.useState("All");
   const [via, setVia] = React.useState("All");
   const [report, setReport] = React.useState<ReportViewData | null>(null);
+  const [b2cLocked, setB2cLocked] = React.useState(false);
 
   const viaOptions = React.useMemo(
     () => Array.from(new Set(reports.map((r) => r.deliveredVia))),
@@ -45,8 +46,14 @@ export function AdminReportsView() {
       (via === "All" || r.deliveredVia === via),
   );
 
-  const openView = (r: LabReport) =>
+  const openView = (r: LabReport) => {
+    const channel = orderById(r.orderId)?.channel ?? "B2C";
+    setB2cLocked(channel === "B2C");
     setReport(toReportView(r, orderPatientName(r.orderId), orderAgeSex(r.orderId)));
+  };
+
+  const changeFormat = (v: ReportBackground) =>
+    setReport((cur) => (cur ? { ...cur, background: v } : cur));
 
   const columns: Column<LabReport>[] = [
     { key: "id", header: "Report ID", value: (r) => r.id, render: (r) => <span className="font-mono text-xs font-medium text-teal-800">{r.id}</span> },
@@ -57,6 +64,11 @@ export function AdminReportsView() {
     { key: "tests", header: "Tests", value: (r) => r.tests.join(", "), render: (r) => <span className="text-xs font-medium text-slate-700">{r.tests.join(", ")}</span> },
     { key: "dept", header: "Department", value: (r) => r.department, render: (r) => <span className="text-xs text-muted-foreground">{r.department}</span> },
     { key: "path", header: "Pathologist", value: (r) => r.pathologist, render: (r) => <span className="text-xs">{r.pathologist}</span> },
+    { key: "fmt", header: "Format", value: (r) => r.background, render: (r) => (
+      <Badge variant="outline" className={`whitespace-nowrap text-[10px] ${r.background === "Without Background" ? "border-slate-300 text-slate-500" : "border-teal-300 text-teal-700"}`}>
+        {r.background === "Without Background" ? "Without" : "With Background"}
+      </Badge>
+    ) },
     { key: "rel", header: "Released", value: (r) => r.releasedAt, render: (r) => <span className="whitespace-nowrap text-xs text-muted-foreground">{fmtDateTime(r.releasedAt)}</span> },
     { key: "via", header: "Delivered Via", value: (r) => r.deliveredVia, render: (r) => (
       <Badge variant="outline" className="text-[10px]">{VIA_LABELS[r.deliveredVia] ?? r.deliveredVia}</Badge>
@@ -177,7 +189,13 @@ export function AdminReportsView() {
         </div>
       </div>
 
-      <ReportDialog open={!!report} onOpenChange={(o) => !o && setReport(null)} data={report} />
+      <ReportDialog
+        open={!!report}
+        onOpenChange={(o) => !o && setReport(null)}
+        data={report}
+        onFormatChange={b2cLocked ? undefined : changeFormat}
+        formatLocked={b2cLocked}
+      />
     </div>
   );
 }

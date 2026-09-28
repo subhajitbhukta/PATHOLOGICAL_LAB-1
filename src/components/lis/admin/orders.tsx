@@ -183,7 +183,7 @@ export function AdminOrdersView() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       {samplesForOrder(selected.id).map((s) => (
                         <SampleLabelCard
-                          key={s.id} sampleId={s.id} patientName={s.patientName}
+                          key={s.id} sampleId={s.id} barcode={s.barcode} patientName={s.patientName}
                           ageSex={orderAgeSex(selected.id)} type={s.type} container={s.container}
                           tests={s.tests.join(", ")} collectedAt={fmtDateTime(s.collectedAt)} source={s.source}
                         />

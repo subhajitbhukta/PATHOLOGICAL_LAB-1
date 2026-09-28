@@ -10,19 +10,22 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useLisNav } from "@/components/lis/nav";
-import { doctors, patients, tests, packages, partners, priceFor, patientById } from "@/lib/lis/data";
+import { doctors, patients, tests, packages, partners, priceFor, patientById, requiredVials } from "@/lib/lis/data";
 import { inr } from "@/lib/lis/format";
 import {
   Barcode, ChannelPill, FormGrid, Field, Money, PageHeader, Panel, SampleLabelCard, StatusPill,
 } from "@/components/lis/widgets";
 import { InvoiceDialog } from "@/components/lis/report-sheet";
 import type { InvoiceViewData } from "@/components/lis/report-sheet";
+import { ReportFormatField, VialBarcodeStep, VialGuidanceList, VialSummaryChip } from "@/components/lis/vial-entry";
+import type { VialBarcodeEntry } from "@/components/lis/vial-entry";
 import {
   CheckCircle2, ChevronLeft, ChevronRight, CreditCard, FlaskConical, Home, IndianRupee,
-  ReceiptText, UserPlus, Users,
+  ReceiptText, ScanLine, UserPlus, Users,
 } from "lucide-react";
+import type { ReportBackground } from "@/lib/lis/types";
 
-const STEPS = ["Patient Information", "Select Tests", "Pricing & Discount", "Payment & Confirm"];
+const STEPS = ["Patient Information", "Select Tests", "Sample Tubes & Vial Barcodes", "Pricing & Payment", "Confirm"];
 
 interface Sel { code: string; name: string; type: "Test" | "Package"; rate: number }
 
@@ -50,9 +53,21 @@ export function AdminOrderNewView() {
   // Step 3 — pricing
   const [discountPct, setDiscountPct] = React.useState(5);
 
+  // Step 2b — vial barcodes (scanned/entered, never generated) + report format
+  const [vialEntries, setVialEntries] = React.useState<VialBarcodeEntry[]>([
+    { container: "EDTA Vacutainer (Lavender)", barcode: "8210034601" },
+    { container: "Plain Vacutainer (Red)", barcode: "8210034602" },
+    { container: "Sodium Fluoride (Grey Top)", barcode: "" },
+  ]);
+  const [reportFormat, setReportFormat] = React.useState<ReportBackground>("With Background");
+
   // Step 4 — payment
   const [payMode, setPayMode] = React.useState("UPI");
   const [homeCollection, setHomeCollection] = React.useState(true);
+
+  const vials = requiredVials(sel.map((s) => s.code));
+  const vialsComplete = vials.length > 0 && vials.every((v) => (vialEntries.find((e) => e.container === v.container)?.barcode ?? "").trim().length > 0);
+  const noDupes = vialEntries.filter((e) => e.barcode).every((e, i, arr) => arr.findIndex((o) => o.barcode === e.barcode && o.barcode) === i);
 
   const scopePrice = (code: string) => {
     if (channel === "B2C") return priceFor(code, "B2C");
@@ -136,7 +151,10 @@ export function AdminOrderNewView() {
               <CheckCircle2 className="h-10 w-10 text-emerald-600" />
               <div className="flex-1">
                 <p className="text-base font-semibold text-emerald-900">Order booked successfully</p>
-                <p className="text-sm text-emerald-800">Invoice generated, Sample ID assigned and barcode printed. Workflow: Booking Confirmed → Sample Collection.</p>
+                <p className="text-sm text-emerald-800">
+                  Invoice generated and {vials.length} pre-printed vial barcode(s) recorded against Sample ID {sampleId}.
+                  Workflow: Booking Confirmed → Sample Collection → Pickup scan → Lab receiving scan.
+                </p>
               </div>
               <Button onClick={() => go("admin/orders")}>Go to Orders</Button>
             </div>
@@ -157,14 +175,23 @@ export function AdminOrderNewView() {
                 </FormGrid>
               </div>
             </Panel>
-            <Panel title="Print Barcode Label" description="Affix on every tube of this sample">
-              <SampleLabelCard
-                sampleId={sampleId} patientName={mode === "existing" ? patientDisplay?.name ?? "" : form.name}
-                ageSex={mode === "existing" ? `${patientDisplay?.age}y / ${patientDisplay?.gender === "Male" ? "M" : "F"}` : "31y / F"}
-                type="Whole Blood EDTA" container="EDTA Vacutainer (Lavender)"
-                tests={sel.map((s) => s.code).join(", ")} collectedAt="28 Sep 2026, 11:30 am"
-                source={channel === "B2C" ? "B2C Walk-in" : partners.find((p) => p.id === partnerId)?.name}
-              />
+            <Panel title="Recorded Vial Barcodes" description="Pre-printed labels scanned at entry — one card per tube">
+              <div className="space-y-3">
+                {vials.map((v, i) => (
+                  <SampleLabelCard
+                    key={v.container}
+                    sampleId={`${sampleId}-${i + 1}`}
+                    barcode={vialEntries.find((e) => e.container === v.container)?.barcode || "—"}
+                    patientName={mode === "existing" ? patientDisplay?.name ?? "" : form.name}
+                    ageSex={mode === "existing" ? `${patientDisplay?.age}y / ${patientDisplay?.gender === "Male" ? "M" : "F"}` : "31y / F"}
+                    type={v.sampleType}
+                    container={v.container}
+                    tests={v.tests.join(", ")}
+                    collectedAt="28 Sep 2026, 11:30 am"
+                    source={channel === "B2C" ? "B2C Walk-in" : partners.find((p) => p.id === partnerId)?.name}
+                  />
+                ))}
+              </div>
             </Panel>
           </div>
         </div>
@@ -239,7 +266,7 @@ export function AdminOrderNewView() {
                         <Checkbox checked={checked} onCheckedChange={() => toggleTest(t.code, t.name)} />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">{t.name} <span className="ml-1 font-mono text-[10px] text-slate-400">{t.code}</span></p>
-                          <p className="truncate text-[11px] text-muted-foreground">{t.department} · {t.sampleType} · TAT {t.tatHours}h</p>
+                          <p className="truncate text-[11px] text-muted-foreground">{t.department} · {t.sampleType} in {t.container} · {t.sampleVolume} · TAT {t.tatHours}h</p>
                         </div>
                         <Money value={scopePrice(t.code)} className="text-sm" />
                       </label>
@@ -262,11 +289,36 @@ export function AdminOrderNewView() {
                     );
                   })}
                 </div>
+                {sel.length > 0 ? (
+                  <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50/50 p-3">
+                    <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold text-teal-900">
+                      <FlaskConical className="h-3.5 w-3.5" /> Vials the operator must draw (from the test master)
+                    </p>
+                    <VialGuidanceList codes={sel.map((s) => s.code)} />
+                  </div>
+                ) : null}
               </Panel>
             ) : null}
 
             {step === 2 ? (
-              <Panel title="3 · Pricing & Discount" description="Rates resolved from the pricing engine by channel & partner">
+              <Panel title="3 · Sample Tubes & Vial Barcodes" description="System-guided vial requirements — operator scans or types each pre-printed barcode">
+                <VialBarcodeStep codes={sel.map((s) => s.code)} entries={vialEntries} onEntriesChange={setVialEntries} />
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <ReportFormatField channel={channel} value={reportFormat} onChange={setReportFormat} />
+                </div>
+                <div className="mt-4 flex justify-end gap-2">
+                  <Button variant="outline" disabled={!vialsComplete || !noDupes} onClick={() => setStep(3)}>
+                    All barcodes recorded — Continue <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+                {!vialsComplete || !noDupes ? (
+                  <p className="mt-2 text-right text-[11px] text-amber-700">Record every vial barcode (no duplicates) to continue.</p>
+                ) : null}
+              </Panel>
+            ) : null}
+
+            {step === 3 ? (
+              <Panel title="4 · Pricing & Discount" description="Rates resolved from the pricing engine by channel & partner">
                 <FormGrid cols={2}>
                   <Field label="Billing Channel" required>
                     <RadioGroup value={channel} onValueChange={(v) => setChannel(v as "B2C" | "B2B")} className="flex gap-4 pt-1">
@@ -304,8 +356,8 @@ export function AdminOrderNewView() {
               </Panel>
             ) : null}
 
-            {step === 3 ? (
-              <Panel title="4 · Payment & Confirm" description="Collect payment, generate invoice, sample ID and barcode">
+            {step === 4 ? (
+              <Panel title="5 · Payment & Confirm" description="Collect payment, generate invoice and lock the recorded vial barcodes to this order">
                 <FormGrid cols={2}>
                   <Field label="Payment Mode" required>
                     <Select value={payMode} onValueChange={setPayMode}>
@@ -322,11 +374,12 @@ export function AdminOrderNewView() {
                   <Field label="Amount Collected"><Input readOnly value={inr(net)} className="font-semibold" /></Field>
                 </FormGrid>
                 <div className="mt-4 rounded-lg border border-teal-200 bg-teal-50/60 p-3 text-xs leading-relaxed text-teal-900">
-                  On confirm: Tax invoice <b>INV-2026-01185</b> is generated (GST 18% split CGST+SGST), Sample ID <b>{sampleId}</b> allocated,
-                  barcode label queued to printer, booking SMS + WhatsApp sent to the patient.
+                  On confirm: Tax invoice <b>INV-2026-01185</b> is generated (GST 18% split CGST+SGST), Sample ID <b>{sampleId}</b> allocated and the
+                  <b> {vials.length} recorded vial barcode(s)</b> are locked to this order for logistics pickup, receiving and department tracking.
+                  Booking SMS + WhatsApp is sent to the patient.
                 </div>
                 <div className="mt-4 flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setStep(2)}><ChevronLeft className="mr-1 h-4 w-4" /> Back</Button>
+                  <Button variant="outline" onClick={() => setStep(3)}><ChevronLeft className="mr-1 h-4 w-4" /> Back</Button>
                   <Button onClick={generate}><CreditCard className="mr-1.5 h-4 w-4" /> Confirm Booking & Generate Invoice</Button>
                 </div>
               </Panel>
@@ -334,7 +387,7 @@ export function AdminOrderNewView() {
 
             <div className="flex justify-between">
               <Button variant="outline" disabled={step === 0} onClick={() => setStep(step - 1)}><ChevronLeft className="mr-1 h-4 w-4" /> Previous</Button>
-              {step < 3 ? <Button onClick={() => setStep(step + 1)}>Next <ChevronRight className="ml-1 h-4 w-4" /></Button> : null}
+              {step < 4 ? <Button onClick={() => setStep(step + 1)}>Next <ChevronRight className="ml-1 h-4 w-4" /></Button> : null}
             </div>
           </div>
 
@@ -370,6 +423,8 @@ export function AdminOrderNewView() {
                 <div className="flex items-center justify-between"><span>Partner billed</span><Money value={sel.reduce((a, s) => a + (channel === "B2B" ? priceFor(s.code, "B2B", partnerId) : s.rate), 0) || undefined} /></div>
                 {homeCollection ? <div className="flex items-center gap-1.5 text-teal-700"><Home className="h-3 w-3" /> Home collection visit scheduled</div> : null}
                 <div className="flex items-center gap-1.5 text-teal-700"><FlaskConical className="h-3 w-3" /> Sample ID allocated on confirm</div>
+                <VialSummaryChip codes={sel.map((s) => s.code)} />
+                <div className="flex items-center gap-1.5 text-teal-700"><ScanLine className="h-3 w-3" /> Report format: {reportFormat}</div>
                 <div className="flex items-center gap-1.5 text-teal-700"><IndianRupee className="h-3 w-3" /> GST invoice auto-generated</div>
               </div>
             </Panel>

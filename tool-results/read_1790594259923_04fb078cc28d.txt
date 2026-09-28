@@ -1,0 +1,671 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import * as React from "react";
+     4→     4→import { Badge } from "@/components/ui/badge";
+     5→     5→import { Button } from "@/components/ui/button";
+     6→     6→import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+     7→     7→import { Input } from "@/components/ui/input";
+     8→     8→import { Label } from "@/components/ui/label";
+     9→     9→import {
+    10→    10→  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    11→    11→} from "@/components/ui/table";
+    12→    12→import { cn } from "@/lib/utils";
+    13→    13→import { barcodeBars, inr, qrMatrix } from "@/lib/lis/format";
+    14→    14→import { Check, ChevronLeft, ChevronRight, ChevronsUpDown, CircleDot, Search, Printer } from "lucide-react";
+    15→    15→
+    16→    16→// ============================================================
+    17→    17→// Status tone system (no blue/indigo in palette)
+    18→    18→// ============================================================
+    19→    19→type Tone = "teal" | "violet" | "amber" | "emerald" | "rose" | "slate";
+    20→    20→
+    21→    21→const TONE_CLASSES: Record<Tone, string> = {
+    22→    22→  teal: "bg-teal-50 text-teal-700 border-teal-200",
+    23→    23→  violet: "bg-violet-50 text-violet-700 border-violet-200",
+    24→    24→  amber: "bg-amber-50 text-amber-700 border-amber-200",
+    25→    25→  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    26→    26→  rose: "bg-rose-50 text-rose-700 border-rose-200",
+    27→    27→  slate: "bg-slate-100 text-slate-600 border-slate-200",
+    28→    28→};
+    29→    29→
+    30→    30→const STATUS_TONES: Record<string, Tone> = {
+    31→    31→  // order workflow
+    32→    32→  "Booking Confirmed": "teal", "Sample Collected": "teal", "Pickup Requested": "amber",
+    33→    33→  "Picked Up": "violet", "In Transit": "violet", "Received at Lab": "teal",
+    34→    34→  "Sample Accepted": "emerald", "Assigned to Department": "violet", "Test in Progress": "violet",
+    35→    35→  "Result Entered": "amber", "Verification Pending": "amber", "Pathologist Approved": "emerald",
+    36→    36→  "Report Generated": "emerald", "Report Delivered": "emerald",
+    37→    37→  "Sample Rejected": "rose", "Recollection Requested": "rose",
+    38→    38→  // payments
+    39→    39→  Paid: "emerald", Unpaid: "rose", Partial: "amber", Credit: "violet", Refunded: "slate",
+    40→    40→  // generic
+    41→    41→  Active: "emerald", Inactive: "slate", Suspended: "rose", Pending: "amber", Approved: "emerald",
+    42→    42→  Rejected: "rose", "Sent Back": "amber", Queued: "amber", Sent: "emerald", Failed: "rose",
+    43→    43→  Draft: "slate", Scheduled: "violet", Completed: "emerald", Cancelled: "rose",
+    44→    44→  Requested: "amber", Assigned: "violet", Settled: "emerald", "Partially Settled": "amber", Open: "amber",
+    45→    45→  "Pending Dispatch": "amber", Dispatched: "violet", "In Progress at External Lab": "violet",
+    46→    46→  "Result Received": "teal", "Report Verified": "emerald",
+    47→    47→  "Pending Technical Review": "amber", "Pending Pathologist Approval": "amber",
+    48→    48→  "On Leave": "amber", Good: "emerald", Damaged: "rose", Leaking: "rose", Insufficient: "amber",
+    49→    49→  Urgent: "rose", STAT: "rose", Routine: "slate",
+    50→    50→};
+    51→    51→
+    52→    52→export function toneOf(status: string): Tone {
+    53→    53→  return STATUS_TONES[status] ?? "slate";
+    54→    54→}
+    55→    55→
+    56→    56→export function StatusPill({ status, className }: { status: string; className?: string }) {
+    57→    57→  return (
+    58→    58→    <Badge variant="outline" className={cn("font-medium whitespace-nowrap", TONE_CLASSES[toneOf(status)], className)}>
+    59→    59→      {status}
+    60→    60→    </Badge>
+    61→    61→  );
+    62→    62→}
+    63→    63→
+    64→    64→export function FlagPill({ flag }: { flag: string }) {
+    65→    65→  const map: Record<string, { label: string; tone: Tone }> = {
+    66→    66→    H: { label: "H", tone: "rose" }, L: { label: "L", tone: "amber" },
+    67→    67→    N: { label: "N", tone: "emerald" }, A: { label: "A", tone: "rose" },
+    68→    68→  };
+    69→    69→  const f = map[flag] ?? { label: flag, tone: "slate" as Tone };
+    70→    70→  return (
+    71→    71→    <Badge variant="outline" className={cn("h-5 w-6 justify-center p-0 font-bold", TONE_CLASSES[f.tone])}>
+    72→    72→      {f.label}
+    73→    73→    </Badge>
+    74→    74→  );
+    75→    75→}
+    76→    76→
+    77→    77→export function ChannelPill({ channel }: { channel: string }) {
+    78→    78→  const map: Record<string, string> = {
+    79→    79→    B2C: "bg-teal-600/10 text-teal-700 border-teal-200",
+    80→    80→    B2B: "bg-violet-600/10 text-violet-700 border-violet-200",
+    81→    81→    SUB: "bg-amber-500/10 text-amber-700 border-amber-200",
+    82→    82→  };
+    83→    83→  return (
+    84→    84→    <Badge variant="outline" className={cn("font-semibold whitespace-nowrap", map[channel] ?? TONE_CLASSES.slate)}>
+    85→    85→      {channel}
+    86→    86→    </Badge>
+    87→    87→  );
+    88→    88→}
+    89→    89→
+    90→    90→export function Money({ value, className, compact }: { value?: number; className?: string; compact?: boolean }) {
+    91→    91→  return <span className={cn("tabular-nums font-medium", className)}>{inr(value, { compact })}</span>;
+    92→    92→}
+    93→    93→
+    94→    94→// ============================================================
+    95→    95→// Layout primitives
+    96→    96→// ============================================================
+    97→    97→export function PageHeader({
+    98→    98→  title, subtitle, actions, icon,
+    99→    99→}: { title: string; subtitle?: string; actions?: React.ReactNode; icon?: React.ReactNode }) {
+   100→   100→  return (
+   101→   101→    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+   102→   102→      <div className="flex items-start gap-3">
+   103→   103→        {icon ? <div className="mt-0.5 rounded-lg bg-teal-600/10 p-2 text-teal-700">{icon}</div> : null}
+   104→   104→        <div>
+   105→   105→          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{title}</h1>
+   106→   106→          {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p> : null}
+   107→   107→        </div>
+   108→   108→      </div>
+   109→   109→      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+   110→   110→    </div>
+   111→   111→  );
+   112→   112→}
+   113→   113→
+   114→   114→export function Panel({
+   115→   115→  title, description, actions, children, className, contentClassName, id,
+   116→   116→}: {
+   117→   117→  title?: string; description?: string; actions?: React.ReactNode;
+   118→   118→  children: React.ReactNode; className?: string; contentClassName?: string; id?: string;
+   119→   119→}) {
+   120→   120→  return (
+   121→   121→    <Card id={id} className={cn("border-slate-200/80 shadow-sm", className)}>
+   122→   122→      {title || actions ? (
+   123→   123→        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+   124→   124→          <div className="space-y-0.5">
+   125→   125→            {title ? <CardTitle className="text-base font-semibold">{title}</CardTitle> : null}
+   126→   126→            {description ? <CardDescription>{description}</CardDescription> : null}
+   127→   127→          </div>
+   128→   128→          {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+   129→   129→        </CardHeader>
+   130→   130→      ) : null}
+   131→   131→      <CardContent className={cn("p-4 pt-0", !title && "pt-4", contentClassName)}>{children}</CardContent>
+   132→   132→    </Card>
+   133→   133→  );
+   134→   134→}
+   135→   135→
+   136→   136→export function StatCard({
+   137→   137→  label, value, sublabel, delta, deltaTone, icon, accent = "teal", onClick,
+   138→   138→}: {
+   139→   139→  label: string; value: React.ReactNode; sublabel?: string; delta?: string;
+   140→   140→  deltaTone?: "up" | "down" | "flat"; icon?: React.ReactNode;
+   141→   141→  accent?: "teal" | "violet" | "amber" | "emerald" | "rose"; onClick?: () => void;
+   142→   142→}) {
+   143→   143→  const accents: Record<string, string> = {
+   144→   144→    teal: "bg-teal-600/10 text-teal-700", violet: "bg-violet-600/10 text-violet-700",
+   145→   145→    amber: "bg-amber-500/10 text-amber-700", emerald: "bg-emerald-600/10 text-emerald-700",
+   146→   146→    rose: "bg-rose-500/10 text-rose-700",
+   147→   147→  };
+   148→   148→  return (
+   149→   149→    <Card
+   150→   150→      className={cn("border-slate-200/80 shadow-sm", onClick && "cursor-pointer transition-shadow hover:shadow-md")}
+   151→   151→      onClick={onClick}
+   152→   152→      role={onClick ? "button" : undefined}
+   153→   153→    >
+   154→   154→      <CardContent className="flex items-start justify-between p-4">
+   155→   155→        <div className="min-w-0">
+   156→   156→          <p className="truncate text-xs font-medium text-muted-foreground">{label}</p>
+   157→   157→          <p className="mt-1 truncate text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{value}</p>
+   158→   158→          <div className="mt-1 flex items-center gap-1.5">
+   159→   159→            {delta ? (
+   160→   160→              <span
+   161→   161→                className={cn(
+   162→   162→                  "text-xs font-medium",
+   163→   163→                  deltaTone === "up" && "text-emerald-600", deltaTone === "down" && "text-rose-600",
+   164→   164→                  deltaTone === "flat" && "text-slate-500",
+   165→   165→                )}
+   166→   166→              >
+   167→   167→                {delta}
+   168→   168→              </span>
+   169→   169→            ) : null}
+   170→   170→            {sublabel ? <span className="truncate text-xs text-muted-foreground">{sublabel}</span> : null}
+   171→   171→          </div>
+   172→   172→        </div>
+   173→   173→        {icon ? <div className={cn("rounded-lg p-2", accents[accent])}>{icon}</div> : null}
+   174→   174→      </CardContent>
+   175→   175→    </Card>
+   176→   176→  );
+   177→   177→}
+   178→   178→
+   179→   179→export function EmptyState({ title, hint, icon }: { title: string; hint?: string; icon?: React.ReactNode }) {
+   180→   180→  return (
+   181→   181→    <div className="flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed py-12 text-center">
+   182→   182→      <div className="text-slate-300">{icon ?? <CircleDot className="h-8 w-8" />}</div>
+   183→   183→      <p className="text-sm font-medium text-slate-600">{title}</p>
+   184→   184→      {hint ? <p className="max-w-sm text-xs text-muted-foreground">{hint}</p> : null}
+   185→   185→    </div>
+   186→   186→  );
+   187→   187→}
+   188→   188→
+   189→   189→export function KeyValue({ items, cols = 2 }: { items: { label: string; value: React.ReactNode }[]; cols?: number }) {
+   190→   190→  return (
+   191→   191→    <dl className={cn("grid gap-x-6 gap-y-3", cols === 3 ? "sm:grid-cols-3" : cols === 4 ? "grid-cols-2 sm:grid-cols-4" : "sm:grid-cols-2")}>
+   192→   192→      {items.map((it) => (
+   193→   193→        <div key={it.label} className="min-w-0">
+   194→   194→          <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{it.label}</dt>
+   195→   195→          <dd className="mt-0.5 truncate text-sm font-medium text-slate-800">{it.value}</dd>
+   196→   196→        </div>
+   197→   197→      ))}
+   198→   198→    </dl>
+   199→   199→  );
+   200→   200→}
+   201→   201→
+   202→   202→// ============================================================
+   203→   203→// Forms
+   204→   204→// ============================================================
+   205→   205→export function Field({
+   206→   206→  label, required, hint, children, className,
+   207→   207→}: { label: string; required?: boolean; hint?: string; children: React.ReactNode; className?: string }) {
+   208→   208→  return (
+   209→   209→    <div className={cn("space-y-1.5", className)}>
+   210→   210→      <Label className="text-xs font-medium text-slate-700">
+   211→   211→        {label} {required ? <span className="text-rose-500">*</span> : null}
+   212→   212→      </Label>
+   213→   213→      {children}
+   214→   214→      {hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
+   215→   215→    </div>
+   216→   216→  );
+   217→   217→}
+   218→   218→
+   219→   219→export function FormGrid({ cols = 2, children, className }: { cols?: 2 | 3 | 4; children: React.ReactNode; className?: string }) {
+   220→   220→  return (
+   221→   221→    <div
+   222→   222→      className={cn(
+   223→   223→        "grid gap-4",
+   224→   224→        cols === 2 && "sm:grid-cols-2",
+   225→   225→        cols === 3 && "sm:grid-cols-3",
+   226→   226→        cols === 4 && "sm:grid-cols-2 lg:grid-cols-4",
+   227→   227→        className,
+   228→   228→      )}
+   229→   229→    >
+   230→   230→      {children}
+   231→   231→    </div>
+   232→   232→  );
+   233→   233→}
+   234→   234→
+   235→   235→export function SearchInput({
+   236→   236→  value, onChange, placeholder = "Search…", className,
+   237→   237→}: { value: string; onChange: (v: string) => void; placeholder?: string; className?: string }) {
+   238→   238→  return (
+   239→   239→    <div className={cn("relative", className)}>
+   240→   240→      <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+   241→   241→      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className="pl-8" />
+   242→   242→    </div>
+   243→   243→  );
+   244→   244→}
+   245→   245→
+   246→   246→export function PrintButton({ label = "Print" }: { label?: string }) {
+   247→   247→  return (
+   248→   248→    <Button variant="outline" size="sm" onClick={() => window.print()} className="no-print">
+   249→   249→      <Printer className="mr-1.5 h-4 w-4" /> {label}
+   250→   250→    </Button>
+   251→   251→  );
+   252→   252→}
+   253→   253→
+   254→   254→// ============================================================
+   255→   255→// DataTable — generic list with search + pagination
+   256→   256→// ============================================================
+   257→   257→export interface Column<T> {
+   258→   258→  key: string;
+   259→   259→  header: string;
+   260→   260→  className?: string;
+   261→   261→  headClassName?: string;
+   262→   262→  render?: (row: T) => React.ReactNode;
+   263→   263→  value?: (row: T) => string | number;
+   264→   264→}
+   265→   265→
+   266→   266→export function DataTable<T extends object>({
+   267→   267→  columns, rows, searchOf, searchPlaceholder = "Search…", pageSize = 10, onRowClick,
+   268→   268→  toolbar, filters, dense,
+   269→   269→}: {
+   270→   270→  columns: Column<T>[]; rows: T[]; searchOf?: (row: T) => string;
+   271→   271→  searchPlaceholder?: string; pageSize?: number; onRowClick?: (row: T) => void;
+   272→   272→  toolbar?: React.ReactNode; filters?: React.ReactNode; dense?: boolean;
+   273→   273→}) {
+   274→   274→  const [q, setQ] = React.useState("");
+   275→   275→  const [page, setPage] = React.useState(0);
+   276→   276→
+   277→   277→  React.useEffect(() => setPage(0), [q, rows.length]);
+   278→   278→
+   279→   279→  const filtered = React.useMemo(() => {
+   280→   280→    if (!q.trim()) return rows;
+   281→   281→    const needle = q.toLowerCase();
+   282→   282→    return rows.filter((r) =>
+   283→   283→      searchOf ? searchOf(r).toLowerCase().includes(needle) : JSON.stringify(r).toLowerCase().includes(needle),
+   284→   284→    );
+   285→   285→  }, [rows, q, searchOf]);
+   286→   286→
+   287→   287→  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+   288→   288→  const pageRows = filtered.slice(page * pageSize, page * pageSize + pageSize);
+   289→   289→
+   290→   290→  return (
+   291→   291→    <div className="space-y-3">
+   292→   292→      {(toolbar || filters || searchOf) && (
+   293→   293→        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+   294→   294→          <div className="flex flex-wrap items-center gap-2">{filters}</div>
+   295→   295→          <div className="flex flex-wrap items-center gap-2">
+   296→   296→            {searchOf ? <SearchInput value={q} onChange={setQ} placeholder={searchPlaceholder} className="w-full sm:w-64" /> : null}
+   297→   297→            {toolbar}
+   298→   298→          </div>
+   299→   299→        </div>
+   300→   300→      )}
+   301→   301→      <div className="overflow-hidden rounded-lg border">
+   302→   302→        <div className="max-h-[640px] overflow-auto">
+   303→   303→          <Table>
+   304→   304→            <TableHeader className="sticky top-0 z-10 bg-slate-50">
+   305→   305→              <TableRow className="hover:bg-transparent">
+   306→   306→                {columns.map((c) => (
+   307→   307→                  <TableHead key={c.key} className={cn("h-9 text-xs font-semibold text-slate-600", c.headClassName)}>
+   308→   308→                    <span className="inline-flex items-center gap-1">
+   309→   309→                      {c.header}
+   310→   310→                      {c.value ? <ChevronsUpDown className="h-3 w-3 text-slate-300" /> : null}
+   311→   311→                    </span>
+   312→   312→                  </TableHead>
+   313→   313→                ))}
+   314→   314→              </TableRow>
+   315→   315→            </TableHeader>
+   316→   316→            <TableBody>
+   317→   317→              {pageRows.length === 0 ? (
+   318→   318→                <TableRow>
+   319→   319→                  <TableCell colSpan={columns.length} className="h-32 text-center text-sm text-muted-foreground">
+   320→   320→                    No records found.
+   321→   321→                  </TableCell>
+   322→   322→                </TableRow>
+   323→   323→              ) : (
+   324→   324→                pageRows.map((row, i) => (
+   325→   325→                  <TableRow
+   326→   326→                    key={i}
+   327→   327→                    className={cn(onRowClick && "cursor-pointer")}
+   328→   328→                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+   329→   329→                  >
+   330→   330→                    {columns.map((c) => (
+   331→   331→                      <TableCell key={c.key} className={cn(!dense && "py-2.5", c.className)}>
+   332→   332→                        {c.render ? c.render(row) : c.value ? String(c.value(row)) : null}
+   333→   333→                      </TableCell>
+   334→   334→                    ))}
+   335→   335→                  </TableRow>
+   336→   336→                ))
+   337→   337→              )}
+   338→   338→            </TableBody>
+   339→   339→          </Table>
+   340→   340→        </div>
+   341→   341→      </div>
+   342→   342→      <div className="flex items-center justify-between text-xs text-muted-foreground">
+   343→   343→        <span>
+   344→   344→          Showing {filtered.length === 0 ? 0 : page * pageSize + 1}–{Math.min(filtered.length, (page + 1) * pageSize)} of {filtered.length}
+   345→   345→        </span>
+   346→   346→        <div className="flex items-center gap-1">
+   347→   347→          <Button variant="outline" size="sm" className="h-7 px-2" disabled={page === 0} onClick={() => setPage(page - 1)}>
+   348→   348→            <ChevronLeft className="h-3.5 w-3.5" />
+   349→   349→          </Button>
+   350→   350→          <span className="px-1 tabular-nums">Page {page + 1} / {totalPages}</span>
+   351→   351→          <Button variant="outline" size="sm" className="h-7 px-2" disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>
+   352→   352→            <ChevronRight className="h-3.5 w-3.5" />
+   353→   353→          </Button>
+   354→   354→        </div>
+   355→   355→      </div>
+   356→   356→    </div>
+   357→   357→  );
+   358→   358→}
+   359→   359→
+   360→   360→// ============================================================
+   361→   361→// Timelines & steppers
+   362→   362→// ============================================================
+   363→   363→export function Timeline({ items }: { items: { label: string; time?: string; note?: string }[] }) {
+   364→   364→  return (
+   365→   365→    <ol className="relative space-y-0">
+   366→   366→      {items.map((it, i) => {
+   367→   367→        const done = Boolean(it.time);
+   368→   368→        const last = i === items.length - 1;
+   369→   369→        return (
+   370→   370→          <li key={it.label} className="relative flex gap-3 pb-4 last:pb-0">
+   371→   371→            {!last ? (
+   372→   372→              <span className={cn("absolute left-[9px] top-5 h-full w-px", done && it.time ? "bg-teal-300" : "bg-slate-200")} />
+   373→   373→            ) : null}
+   374→   374→            <span
+   375→   375→              className={cn(
+   376→   376→                "z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white",
+   377→   377→                done ? "border-teal-500 bg-teal-500 text-white" : "border-slate-300 text-slate-300",
+   378→   378→              )}
+   379→   379→            >
+   380→   380→              {done ? <Check className="h-3 w-3" /> : <span className="h-1.5 w-1.5 rounded-full bg-current" />}
+   381→   381→            </span>
+   382→   382→            <div className="min-w-0">
+   383→   383→              <p className={cn("text-sm font-medium leading-5", done ? "text-slate-900" : "text-slate-500")}>{it.label}</p>
+   384→   384→              {it.time ? <p className="text-xs text-muted-foreground">{it.time}</p> : null}
+   385→   385→              {it.note ? <p className="text-xs text-muted-foreground">{it.note}</p> : null}
+   386→   386→            </div>
+   387→   387→          </li>
+   388→   388→        );
+   389→   389→      })}
+   390→   390→    </ol>
+   391→   391→  );
+   392→   392→}
+   393→   393→
+   394→   394→export function PatientSteps({ current }: { current: number }) {
+   395→   395→  const steps = ["Sample Collected", "Sample Received", "Test in Progress", "Report Verification", "Report Ready"];
+   396→   396→  return (
+   397→   397→    <ol className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-0">
+   398→   398→      {steps.map((s, i) => {
+   399→   399→        const done = i < current;
+   400→   400→        const active = i === current;
+   401→   401→        return (
+   402→   402→          <li key={s} className="flex items-center gap-2 sm:flex-1">
+   403→   403→            <span
+   404→   404→              className={cn(
+   405→   405→                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[11px] font-bold",
+   406→   406→                done && "border-emerald-500 bg-emerald-500 text-white",
+   407→   407→                active && "border-teal-500 text-teal-600",
+   408→   408→                !done && !active && "border-slate-300 text-slate-400",
+   409→   409→              )}
+   410→   410→            >
+   411→   411→              {done ? <Check className="h-3.5 w-3.5" /> : i + 1}
+   412→   412→            </span>
+   413→   413→            <span className={cn("text-xs font-medium", done || active ? "text-slate-900" : "text-slate-400")}>{s}</span>
+   414→   414→            {i < steps.length - 1 ? <span className="mx-1 hidden h-px flex-1 bg-slate-200 sm:block" /> : null}
+   415→   415→          </li>
+   416→   416→        );
+   417→   417→      })}
+   418→   418→    </ol>
+   419→   419→  );
+   420→   420→}
+   421→   421→
+   422→   422→export function WorkflowChain({ flow, current }: { flow: string[]; current: number }) {
+   423→   423→  return (
+   424→   424→    <div className="flex items-center gap-1 overflow-x-auto pb-1">
+   425→   425→      {flow.map((s, i) => (
+   426→   426→        <React.Fragment key={s}>
+   427→   427→          <span
+   428→   428→            className={cn(
+   429→   429→              "whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium",
+   430→   430→              i < current && "bg-teal-600 text-white",
+   431→   431→              i === current && "bg-teal-100 text-teal-800 ring-1 ring-teal-400",
+   432→   432→              i > current && "bg-slate-100 text-slate-500",
+   433→   433→            )}
+   434→   434→          >
+   435→   435→            {s}
+   436→   436→          </span>
+   437→   437→          {i < flow.length - 1 ? <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" /> : null}
+   438→   438→        </React.Fragment>
+   439→   439→      ))}
+   440→   440→    </div>
+   441→   441→  );
+   442→   442→}
+   443→   443→
+   444→   444→// ============================================================
+   445→   445→// QR / Barcode / cards
+   446→   446→// ============================================================
+   447→   447→export function QR({ value, size = 84, className }: { value: string; size?: number; className?: string }) {
+   448→   448→  const m = qrMatrix(value);
+   449→   449→  const cell = size / m.length;
+   450→   450→  return (
+   451→   451→    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className={cn("shrink-0", className)} role="img" aria-label="QR code">
+   452→   452→      <rect width={size} height={size} fill="white" />
+   453→   453→      {m.map((row, y) => row.map((on, x) => on ? (
+   454→   454→        <rect key={`${x}-${y}`} x={x * cell} y={y * cell} width={cell + 0.15} height={cell + 0.15} fill="#0f172a" />
+   455→   455→      ) : null))}
+   456→   456→    </svg>
+   457→   457→  );
+   458→   458→}
+   459→   459→
+   460→   460→export function Barcode({ value, height = 40, className }: { value: string; height?: number; className?: string }) {
+   461→   461→  const bars = barcodeBars(value);
+   462→   462→  const { widths, total } = React.useMemo(() => {
+   463→   463→    const arr: { x: number; w: number }[] = [];
+   464→   464→    let cursor = 0;
+   465→   465→    for (const w of bars) {
+   466→   466→      arr.push({ x: cursor, w });
+   467→   467→      cursor += w + 1.6;
+   468→   468→    }
+   469→   469→    return { widths: arr, total: cursor };
+   470→   470→  }, [value]);
+   471→   471→  return (
+   472→   472→    <div className={cn("select-none", className)}>
+   473→   473→      <svg viewBox={`0 0 ${total} ${height}`} height={height} className="w-full" role="img" aria-label={`Barcode ${value}`}>
+   474→   474→        <rect width={total} height={height} fill="white" />
+   475→   475→        {widths.map((b, i) => (
+   476→   476→          <rect key={i} x={b.x} y={0} width={b.w} height={height} fill="#0f172a" />
+   477→   477→        ))}
+   478→   478→      </svg>
+   479→   479→      <p className="mt-0.5 text-center font-mono text-[10px] tracking-[0.18em] text-slate-800">{value}</p>
+   480→   480→    </div>
+   481→   481→  );
+   482→   482→}
+   483→   483→
+   484→   484→export function SampleLabelCard({
+   485→   485→  sampleId, patientName, ageSex, type, container, tests, collectedAt, source,
+   486→   486→}: {
+   487→   487→  sampleId: string; patientName: string; ageSex: string; type: string; container: string;
+   488→   488→  tests: string; collectedAt: string; source?: string;
+   489→   489→}) {
+   490→   490→  return (
+   491→   491→    <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm">
+   492→   492→      <div className="flex items-start justify-between gap-2 border-b border-dashed border-slate-300 pb-2">
+   493→   493→        <div className="min-w-0">
+   494→   494→          <p className="truncate text-xs font-semibold text-slate-900">Apex Reference Laboratories</p>
+   495→   495→          <p className="truncate text-[10px] text-muted-foreground">{source ?? "B2C Direct"} · {collectedAt}</p>
+   496→   496→        </div>
+   497→   497→        <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white">Sample</span>
+   498→   498→      </div>
+   499→   499→      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+   500→   500→        <p><span className="text-muted-foreground">Patient:</span> <span className="font-semibold">{patientName}</span></p>
+   501→   501→        <p><span className="text-muted-foreground">Age/Sex:</span> <span className="font-semibold">{ageSex}</span></p>
+   502→   502→        <p className="col-span-2"><span className="text-muted-foreground">Type:</span> <span className="font-semibold">{type} · {container}</span></p>
+   503→   503→        <p className="col-span-2 truncate"><span className="text-muted-foreground">Tests:</span> <span className="font-semibold">{tests}</span></p>
+   504→   504→      </div>
+   505→   505→      <Barcode value={sampleId} height={34} className="mt-2" />
+   506→   506→    </div>
+   507→   507→  );
+   508→   508→}
+   509→   509→
+   510→   510→// ============================================================
+   511→   511→// Charts (dependency-free SVG)
+   512→   512→// ============================================================
+   513→   513→const CHART_COLORS = ["#0d9488", "#7c3aed", "#f59e0b", "#10b981", "#f43f5e", "#a3a3a3", "#84cc16", "#ea580c"];
+   514→   514→
+   515→   515→export function MiniBars({
+   516→   516→  data, height = 170, color = "#0d9488", format = (v: number) => inr(v, { compact: true }),
+   517→   517→}: { data: { label: string; value: number }[]; height?: number; color?: string; format?: (v: number) => string }) {
+   518→   518→  const max = Math.max(...data.map((d) => d.value), 1);
+   519→   519→  return (
+   520→   520→    <div className="flex items-end gap-2" style={{ height: height + 34 }}>
+   521→   521→      {data.map((d) => (
+   522→   522→        <div key={d.label} className="flex min-w-0 flex-1 flex-col items-center gap-1">
+   523→   523→          <span className="text-[10px] font-medium text-slate-500">{format(d.value)}</span>
+   524→   524→          <div
+   525→   525→            className="w-full max-w-[38px] rounded-t transition-all"
+   526→   526→            style={{ height: Math.max(4, (d.value / max) * height), backgroundColor: color, opacity: 0.85 }}
+   527→   527→            title={`${d.label}: ${format(d.value)}`}
+   528→   528→          />
+   529→   529→          <span className="w-full truncate text-center text-[10px] text-muted-foreground">{d.label}</span>
+   530→   530→        </div>
+   531→   531→      ))}
+   532→   532→    </div>
+   533→   533→  );
+   534→   534→}
+   535→   535→
+   536→   536→export function HBars({
+   537→   537→  data, format = (v: number) => inr(v, { compact: true }), colorMap,
+   538→   538→}: {
+   539→   539→  data: { label: string; value: number; sub?: string }[];
+   540→   540→  format?: (v: number) => string; colorMap?: (i: number) => string;
+   541→   541→}) {
+   542→   542→  const max = Math.max(...data.map((d) => d.value), 1);
+   543→   543→  return (
+   544→   544→    <div className="space-y-2.5">
+   545→   545→      {data.map((d, i) => (
+   546→   546→        <div key={d.label} className="grid grid-cols-[minmax(90px,180px)_1fr_auto] items-center gap-2 sm:grid-cols-[minmax(120px,220px)_1fr_auto]">
+   547→   547→          <span className="truncate text-xs font-medium text-slate-700" title={d.label}>{d.label}</span>
+   548→   548→          <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+   549→   549→            <div
+   550→   550→              className="h-full rounded-full"
+   551→   551→              style={{ width: `${(d.value / max) * 100}%`, backgroundColor: colorMap ? colorMap(i) : CHART_COLORS[i % CHART_COLORS.length] }}
+   552→   552→            />
+   553→   553→          </div>
+   554→   554→          <span className="text-xs font-semibold tabular-nums text-slate-800">
+   555→   555→            {format(d.value)}
+   556→   556→            {d.sub ? <span className="ml-1 font-normal text-muted-foreground">{d.sub}</span> : null}
+   557→   557→          </span>
+   558→   558→        </div>
+   559→   559→      ))}
+   560→   560→    </div>
+   561→   561→  );
+   562→   562→}
+   563→   563→
+   564→   564→export function Donut({
+   565→   565→  data, size = 150, thickness = 22, centerLabel, centerValue,
+   566→   566→}: {
+   567→   567→  data: { label: string; value: number }[]; size?: number; thickness?: number;
+   568→   568→  centerLabel?: string; centerValue?: string;
+   569→   569→}) {
+   570→   570→  const total = data.reduce((a, b) => a + b.value, 0) || 1;
+   571→   571→  const r = (size - thickness) / 2;
+   572→   572→  const c = 2 * Math.PI * r;
+   573→   573→  const segments = React.useMemo(
+   574→   574→    () =>
+   575→   575→      data.map((d, i) => ({
+   576→   576→        label: d.label,
+   577→   577→        len: (d.value / total) * c,
+   578→   578→        offset: data.slice(0, i).reduce((a, prev) => a + (prev.value / total) * c, 0),
+   579→   579→        color: CHART_COLORS[i % CHART_COLORS.length],
+   580→   580→      })),
+   581→   581→    [data, total, c],
+   582→   582→  );
+   583→   583→  return (
+   584→   584→    <div className="flex flex-wrap items-center gap-6">
+   585→   585→      <div className="relative" style={{ width: size, height: size }}>
+   586→   586→        <svg width={size} height={size} className="-rotate-90">
+   587→   587→          {segments.map((s) => (
+   588→   588→            <circle
+   589→   589→              key={s.label} cx={size / 2} cy={size / 2} r={r} fill="none"
+   590→   590→              stroke={s.color} strokeWidth={thickness}
+   591→   591→              strokeDasharray={`${s.len} ${c - s.len}`} strokeDashoffset={-s.offset}
+   592→   592→            />
+   593→   593→          ))}
+   594→   594→        </svg>
+   595→   595→        <div className="absolute inset-0 flex flex-col items-center justify-center">
+   596→   596→          <span className="text-lg font-semibold text-slate-900">{centerValue}</span>
+   597→   597→          <span className="text-[10px] text-muted-foreground">{centerLabel}</span>
+   598→   598→        </div>
+   599→   599→      </div>
+   600→   600→      <ul className="space-y-1.5">
+   601→   601→        {data.map((d, i) => (
+   602→   602→          <li key={d.label} className="flex items-center gap-2 text-xs">
+   603→   603→            <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+   604→   604→            <span className="text-slate-600">{d.label}</span>
+   605→   605→            <span className="font-semibold text-slate-900">{Math.round((d.value / total) * 100)}%</span>
+   606→   606→          </li>
+   607→   607→        ))}
+   608→   608→      </ul>
+   609→   609→    </div>
+   610→   610→  );
+   611→   611→}
+   612→   612→
+   613→   613→export function TrendArea({
+   614→   614→  data, height = 170, color = "#0d9488", format = (v: number) => inr(v, { compact: true }),
+   615→   615→}: { data: { label: string; value: number }[]; height?: number; color?: string; format?: (v: number) => string }) {
+   616→   616→  const w = 560; const h = height; const pad = 26;
+   617→   617→  const max = Math.max(...data.map((d) => d.value)) * 1.1;
+   618→   618→  const min = 0;
+   619→   619→  const xs = data.map((_, i) => pad + (i * (w - pad * 2)) / (data.length - 1));
+   620→   620→  const ys = data.map((d) => h - pad - ((d.value - min) / (max - min)) * (h - pad * 2));
+   621→   621→  const line = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
+   622→   622→  const area = `${line} L${xs[xs.length - 1]},${h - pad} L${xs[0]},${h - pad} Z`;
+   623→   623→  return (
+   624→   624→    <div>
+   625→   625→      <svg viewBox={`0 0 ${w} ${h}`} className="w-full" style={{ height }}>
+   626→   626→        {[0.25, 0.5, 0.75, 1].map((f) => (
+   627→   627→          <line key={f} x1={pad} x2={w - pad} y1={h - pad - f * (h - pad * 2)} y2={h - pad - f * (h - pad * 2)} stroke="#e2e8f0" strokeDasharray="3 4" />
+   628→   628→        ))}
+   629→   629→        <path d={area} fill={color} opacity="0.12" />
+   630→   630→        <path d={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+   631→   631→        {xs.map((x, i) => <circle key={i} cx={x} cy={ys[i]} r="3.5" fill="white" stroke={color} strokeWidth="2" />)}
+   632→   632→      </svg>
+   633→   633→      <div className="mt-1 flex justify-between px-2">
+   634→   634→        {data.map((d) => (
+   635→   635→          <span key={d.label} className="text-[10px] text-muted-foreground">
+   636→   636→            {d.label} · {format(d.value)}
+   637→   637→          </span>
+   638→   638→        ))}
+   639→   639→      </div>
+   640→   640→    </div>
+   641→   641→  );
+   642→   642→}
+   643→   643→
+   644→   644→// Price hierarchy tree (pricing engine)
+   645→   645→export function PriceNode({
+   646→   646→  label, sub, price, tone = "teal", children, badge,
+   647→   647→}: {
+   648→   648→  label: string; sub?: string; price: string | number; tone?: "teal" | "violet" | "amber" | "emerald" | "slate";
+   649→   649→  children?: React.ReactNode; badge?: string;
+   650→   650→}) {
+   651→   651→  const border: Record<string, string> = {
+   652→   652→    teal: "border-teal-300", violet: "border-violet-300", amber: "border-amber-300",
+   653→   653→    emerald: "border-emerald-300", slate: "border-slate-300",
+   654→   654→  };
+   655→   655→  return (
+   656→   656→    <div className="space-y-2">
+   657→   657→      <div className={cn("flex items-center justify-between gap-3 rounded-lg border bg-white px-3 py-2 shadow-sm", border[tone])}>
+   658→   658→        <div className="min-w-0">
+   659→   659→          <p className="truncate text-sm font-semibold text-slate-800">{label}</p>
+   660→   660→          {sub ? <p className="truncate text-xs text-muted-foreground">{sub}</p> : null}
+   661→   661→        </div>
+   662→   662→        <div className="flex items-center gap-2">
+   663→   663→          {badge ? <Badge variant="outline" className="text-[10px]">{badge}</Badge> : null}
+   664→   664→          <span className="whitespace-nowrap text-sm font-bold tabular-nums text-slate-900">{typeof price === "number" ? inr(price) : price}</span>
+   665→   665→        </div>
+   666→   666→      </div>
+   667→   667→      {children ? <div className="ml-4 space-y-2 border-l-2 border-dashed border-slate-200 pl-4 sm:ml-6">{children}</div> : null}
+   668→   668→    </div>
+   669→   669→  );
+   670→   670→}
+   671→   671→
