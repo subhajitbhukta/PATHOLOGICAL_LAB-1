@@ -1,0 +1,563 @@
+     1→     1→import type {
+     2→     2→  Branch, ContainerType, Courier, Department, PackageItem, Partner, Patient,
+     3→     3→  Pathologist, PriceRule, ReportTemplate, SampleType, SubAgency, TestGroup, TestMaster,
+     4→     4→} from "./types";
+     5→     5→
+     6→     6→// ============================================================
+     7→     7→// CORE MASTER DATA — Apex Reference Laboratories (sample)
+     8→     8→// ============================================================
+     9→     9→
+    10→    10→export const LAB = {
+    11→    11→  name: "Apex Reference Laboratories",
+    12→    12→  short: "Apex Labs",
+    13→    13→  tagline: "Central Reference Laboratory Network",
+    14→    14→  address: "Plot 14, MIDC Health Square, Andheri East",
+    15→    15→  city: "Mumbai 400 093, Maharashtra",
+    16→    16→  phone: "+91 22 4890 1234",
+    17→    17→  email: "care@apexlabs.in",
+    18→    18→  gstin: "27ABCDE1234F1Z5",
+    19→    19→  cin: "U85110MH2012PTC234567",
+    20→    20→  nabl: "NABL ISO 15189:2022 · Cert No. MC-4521",
+    21→    21→  smsSender: "APEXLB",
+    22→    22→};
+    23→    23→
+    24→    24→export const departments: Department[] = [
+    25→    25→  { id: "DEP-01", name: "Haematology", head: "Dr. Anjali Deshpande", tests: 34, tatHours: 6, status: "Active" },
+    26→    26→  { id: "DEP-02", name: "Biochemistry", head: "Dr. Vikram Rao", tests: 58, tatHours: 8, status: "Active" },
+    27→    27→  { id: "DEP-03", name: "Clinical Pathology", head: "Dr. Neha Kulkarni", tests: 21, tatHours: 6, status: "Active" },
+    28→    28→  { id: "DEP-04", name: "Microbiology", head: "Dr. Sanjay Mukherjee", tests: 27, tatHours: 48, status: "Active" },
+    29→    29→  { id: "DEP-05", name: "Serology", head: "Dr. Neha Kulkarni", tests: 16, tatHours: 12, status: "Active" },
+    30→    30→  { id: "DEP-06", name: "Immunology", head: "Dr. Vikram Rao", tests: 19, tatHours: 24, status: "Active" },
+    31→    31→  { id: "DEP-07", name: "Hormones", head: "Dr. Anjali Deshpande", tests: 23, tatHours: 12, status: "Active" },
+    32→    32→  { id: "DEP-08", name: "Histopathology", head: "Dr. Farida Contractor", tests: 12, tatHours: 72, status: "Active" },
+    33→    33→  { id: "DEP-09", name: "Molecular Biology", head: "Dr. Sanjay Mukherjee", tests: 14, tatHours: 36, status: "Active" },
+    34→    34→];
+    35→    35→
+    36→    36→export const sampleTypes: SampleType[] = [
+    37→    37→  { id: "ST-01", name: "Whole Blood EDTA", abbreviation: "WB-EDTA", container: "EDTA Vacutainer (Lavender)", fasting: "Not required", notes: "Invert 8–10 times immediately after collection" },
+    38→    38→  { id: "ST-02", name: "Whole Blood Fluoride", abbreviation: "WB-FL", container: "Fluoride Oxalate (Grey)", fasting: "8–10 hrs fasting", notes: "For glucose / HbA1c estimation" },
+    39→    39→  { id: "ST-03", name: "Serum", abbreviation: "SER", container: "Plain Vacutainer (Red)", fasting: "10–12 hrs for lipids", notes: "Allow 30 min clotting, centrifuge 3000 rpm" },
+    40→    40→  { id: "ST-04", name: "Plasma Citrate", abbreviation: "PC", container: "Sodium Citrate (Blue)", fasting: "Not required", notes: "Fill to 100% draw mark, for coagulation" },
+    41→    41→  { id: "ST-05", name: "Urine (Random)", abbreviation: "UR", container: "Sterile Container", fasting: "Not required", notes: "Midstream clean catch preferred" },
+    42→    42→  { id: "ST-06", name: "Stool", abbreviation: "ST", container: "Sterile Container", fasting: "Not required" },
+    43→    43→  { id: "ST-07", name: "Sputum", abbreviation: "SPU", container: "Sterile Container", fasting: "Morning sample", notes: "Deep cough, not saliva" },
+    44→    44→  { id: "ST-08", name: "Throat Swab", abbreviation: "SWB", container: "AFP Swab Stick", notes: "Transport within 2 hrs" },
+    45→    45→  { id: "ST-09", name: "Tissue / Block", abbreviation: "TIS", container: "Formalin Pot (10%)", notes: "Ratio 1:10 tissue to formalin" },
+    46→    46→  { id: "ST-10", name: "Swab (Viral)", abbreviation: "VSW", container: "VTM Swab", notes: "Store 2–8°C, for molecular panels" },
+    47→    47→];
+    48→    48→
+    49→    49→export const containers: ContainerType[] = [
+    50→    50→  { id: "CT-01", name: "EDTA Vacutainer", color: "Lavender", additive: "K2 EDTA", volume: "3 mL", stock: 860 },
+    51→    51→  { id: "CT-02", name: "Fluoride Oxalate", color: "Grey", additive: "NaF + K Oxalate", volume: "2 mL", stock: 420 },
+    52→    52→  { id: "CT-03", name: "Plain Vacutainer", color: "Red", additive: "Clot activator", volume: "5 mL", stock: 1240 },
+    53→    53→  { id: "CT-04", name: "Sodium Citrate", color: "Blue", additive: "3.2% Tri-sodium citrate", volume: "2.7 mL", stock: 310 },
+    54→    54→  { id: "CT-05", name: "Sterile Container", color: "Transparent", additive: "None", volume: "30 mL", stock: 980 },
+    55→    55→  { id: "CT-06", name: "AFP Swab Stick", color: "White", additive: "Charcoal transport", volume: "—", stock: 150 },
+    56→    56→  { id: "CT-07", name: "Formalin Pot", color: "White pot", additive: "10% Neutral buffered formalin", volume: "60 mL", stock: 90 },
+    57→    57→  { id: "CT-08", name: "VTM Swab", color: "Red cap", additive: "Viral Transport Medium", volume: "3 mL", stock: 240 },
+    58→    58→];
+    59→    59→
+    60→    60→export const tests: TestMaster[] = [
+    61→    61→  {
+    62→    62→    code: "CBC", name: "Complete Blood Count (CBC)", shortName: "CBC", department: "Haematology",
+    63→    63→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "Flow Cytometry + Impedance",
+    64→    64→    unit: "—", tatHours: 6, resultType: "Numeric", b2cPrice: 350, group: "Routine Haematology", status: "Active",
+    65→    65→    refRanges: [
+    66→    66→      { sex: "Male", ageGroup: "Adult", range: "Hb 13–17 g/dL · TLC 4000–11000 /µL · Platelets 1.5–4.1 L/µL" },
+    67→    67→      { sex: "Female", ageGroup: "Adult", range: "Hb 12–15 g/dL · TLC 4000–11000 /µL · Platelets 1.5–4.1 L/µL" },
+    68→    68→      { sex: "Any", ageGroup: "Child", range: "Age-specific — see age chart" },
+    69→    69→    ],
+    70→    70→    interpretation: "Evaluate for anaemia, infection and platelet disorders. Correlate clinically with peripheral smear findings.",
+    71→    71→  },
+    72→    72→  {
+    73→    73→    code: "TSH", name: "Thyroid Stimulating Hormone (TSH)", shortName: "TSH", department: "Hormones",
+    74→    74→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA (Chemiluminescence)",
+    75→    75→    unit: "µIU/mL", tatHours: 12, resultType: "Numeric", b2cPrice: 400, group: "Thyroid", status: "Active",
+    76→    76→    refRanges: [
+    77→    77→      { sex: "Any", ageGroup: "Adult", range: "0.4 – 4.0" },
+    78→    78→      { sex: "Any", ageGroup: "Newborn (1–7 d)", range: "1.0 – 39.0" },
+    79→    79→      { sex: "Female", ageGroup: "Pregnancy T1", range: "0.1 – 2.5" },
+    80→    80→    ],
+    81→    81→    interpretation: "Elevated TSH suggests hypothyroidism; suppressed TSH suggests hyperthyroidism. Confirm with Free T4.",
+    82→    82→  },
+    83→    83→  {
+    84→    84→    code: "FT4", name: "Free Thyroxine (FT4)", shortName: "FT4", department: "Hormones",
+    85→    85→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+    86→    86→    unit: "ng/dL", tatHours: 12, resultType: "Numeric", b2cPrice: 350, group: "Thyroid", status: "Active",
+    87→    87→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "0.8 – 1.8" }],
+    88→    88→  },
+    89→    89→  {
+    90→    90→    code: "HBA1C", name: "Glycosylated Haemoglobin (HbA1c)", shortName: "HbA1c", department: "Biochemistry",
+    91→    91→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "HPLC (Ion Exchange)",
+    92→    92→    unit: "%", tatHours: 8, resultType: "Numeric", b2cPrice: 450, group: "Diabetes", status: "Active",
+    93→    93→    refRanges: [
+    94→    94→      { sex: "Any", ageGroup: "Non-diabetic", range: "4.0 – 5.6" },
+    95→    95→      { sex: "Any", ageGroup: "Pre-diabetic", range: "5.7 – 6.4" },
+    96→    96→      { sex: "Any", ageGroup: "Diabetic (control)", range: "< 7.0" },
+    97→    97→    ],
+    98→    98→    interpretation: "Reflects average blood glucose over prior 8–12 weeks.",
+    99→    99→  },
+   100→   100→  {
+   101→   101→    code: "LFT", name: "Liver Function Profile", shortName: "LFT", department: "Biochemistry",
+   102→   102→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "IFCC Kinetic",
+   103→   103→    unit: "—", tatHours: 8, resultType: "Numeric", b2cPrice: 550, group: "Liver", profile: "Liver Profile", status: "Active",
+   104→   104→    refRanges: [
+   105→   105→      { sex: "Any", ageGroup: "Adult", range: "Bilirubin T 0.3–1.2 · SGPT 5–41 · SGOT 5–40 · ALP 40–129 U/L" },
+   106→   106→    ],
+   107→   107→  },
+   108→   108→  {
+   109→   109→    code: "KFT", name: "Kidney Function Profile", shortName: "KFT", department: "Biochemistry",
+   110→   110→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "Enzymatic / Jaffe Kinetic",
+   111→   111→    unit: "—", tatHours: 8, resultType: "Numeric", b2cPrice: 550, group: "Kidney", profile: "Renal Profile", status: "Active",
+   112→   112→    refRanges: [
+   113→   113→      { sex: "Any", ageGroup: "Adult", range: "Urea 17–43 · Creatinine M 0.7–1.3 / F 0.6–1.1 mg/dL · Uric acid 3.5–7.2" },
+   114→   114→    ],
+   115→   115→  },
+   116→   116→  {
+   117→   117→    code: "LIPID", name: "Lipid Profile", shortName: "Lipid Profile", department: "Biochemistry",
+   118→   118→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CHOD-PAP / Enzymatic",
+   119→   119→    unit: "mg/dL", tatHours: 8, resultType: "Numeric", b2cPrice: 500, group: "Lipid", profile: "Cardiac Risk Panel", status: "Active",
+   120→   120→    refRanges: [
+   121→   121→      { sex: "Any", ageGroup: "Adult", range: "Cholesterol < 200 · TG < 150 · HDL > 40 · LDL < 100" },
+   122→   122→    ],
+   123→   123→    interpretation: "Assess cardiovascular risk. Fasting sample preferred but non-fasting acceptable per current guidelines.",
+   124→   124→  },
+   125→   125→  {
+   126→   126→    code: "FBS", name: "Fasting Blood Sugar (Glucose Fasting)", shortName: "FBS", department: "Biochemistry",
+   127→   127→    sampleType: "Whole Blood Fluoride", container: "Fluoride Oxalate (Grey)", methodology: "Hexokinase UV",
+   128→   128→    unit: "mg/dL", tatHours: 4, resultType: "Numeric", b2cPrice: 120, group: "Diabetes", status: "Active",
+   129→   129→    refRanges: [
+   130→   130→      { sex: "Any", ageGroup: "Adult", range: "70 – 100" },
+   131→   131→      { sex: "Any", ageGroup: "Diabetic", range: "80 – 130 (ADA target)" },
+   132→   132→    ],
+   133→   133→  },
+   134→   134→  {
+   135→   135→    code: "VITD", name: "Vitamin D (25-OH)", shortName: "Vit D", department: "Biochemistry",
+   136→   136→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   137→   137→    unit: "ng/mL", tatHours: 24, resultType: "Numeric", b2cPrice: 1300, group: "Vitamins", status: "Active",
+   138→   138→    refRanges: [
+   139→   139→      { sex: "Any", ageGroup: "Adult", range: "30 – 100" },
+   140→   140→      { sex: "Any", ageGroup: "Insufficient", range: "20 – 30" },
+   141→   141→      { sex: "Any", ageGroup: "Deficient", range: "< 20" },
+   142→   142→    ],
+   143→   143→  },
+   144→   144→  {
+   145→   145→    code: "VITB12", name: "Vitamin B12 (Cyanocobalamin)", shortName: "Vit B12", department: "Biochemistry",
+   146→   146→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   147→   147→    unit: "pg/mL", tatHours: 24, resultType: "Numeric", b2cPrice: 1100, group: "Vitamins", status: "Active",
+   148→   148→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "191 – 663" }],
+   149→   149→  },
+   150→   150→  {
+   151→   151→    code: "FERR", name: "Ferritin", shortName: "Ferritin", department: "Immunology",
+   152→   152→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   153→   153→    unit: "ng/mL", tatHours: 24, resultType: "Numeric", b2cPrice: 750, group: "Iron Studies", status: "Active",
+   154→   154→    refRanges: [
+   155→   155→      { sex: "Male", ageGroup: "Adult", range: "30 – 400" },
+   156→   156→      { sex: "Female", ageGroup: "Adult", range: "13 – 150" },
+   157→   157→    ],
+   158→   158→  },
+   159→   159→  {
+   160→   160→    code: "ESR", name: "Erythrocyte Sedimentation Rate", shortName: "ESR", department: "Haematology",
+   161→   161→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "Westergren (Automated)",
+   162→   162→    unit: "mm/hr", tatHours: 6, resultType: "Numeric", b2cPrice: 150, group: "Routine Haematology", status: "Active",
+   163→   163→    refRanges: [
+   164→   164→      { sex: "Male", ageGroup: "Adult", range: "0 – 15" },
+   165→   165→      { sex: "Female", ageGroup: "Adult", range: "0 – 20" },
+   166→   166→    ],
+   167→   167→  },
+   168→   168→  {
+   169→   169→    code: "URINE-R", name: "Urine Routine & Microscopy", shortName: "Urine R/M", department: "Clinical Pathology",
+   170→   170→    sampleType: "Urine (Random)", container: "Sterile Container", methodology: "Manual Microscopy + Dipstick",
+   171→   171→    unit: "—", tatHours: 6, resultType: "Text", b2cPrice: 200, group: "Routine", status: "Active",
+   172→   172→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "Protein: Nil · Sugar: Nil · Pus cells: 0–4 /HPF · Epithelial cells: 0–2 /HPF" }],
+   173→   173→  },
+   174→   174→  {
+   175→   175→    code: "WIDAL", name: "Widal Test (Typhoid)", shortName: "Widal", department: "Serology",
+   176→   176→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "Slide Agglutination",
+   177→   177→    unit: "—", tatHours: 6, resultType: "Text", b2cPrice: 250, status: "Active",
+   178→   178→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "S. Typhi 'O' & 'H' < 1:80 dilution · A H < 1:80" }],
+   179→   179→  },
+   180→   180→  {
+   181→   181→    code: "DENGUE-NS1", name: "Dengue NS1 Antigen", shortName: "Dengue NS1", department: "Serology",
+   182→   182→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "Immunochromatography",
+   183→   183→    unit: "—", tatHours: 6, resultType: "Pos/Neg", b2cPrice: 600, group: "Fever Panel", status: "Active",
+   184→   184→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "Negative" }],
+   185→   185→  },
+   186→   186→  {
+   187→   187→    code: "HBSAG", name: "Hepatitis B Surface Antigen", shortName: "HBsAg", department: "Serology",
+   188→   188→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   189→   189→    unit: "—", tatHours: 12, resultType: "Pos/Neg", b2cPrice: 300, status: "Active",
+   190→   190→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "Non-Reactive ( < 1.0 S/CO )" }],
+   191→   191→  },
+   192→   192→  {
+   193→   193→    code: "HIV", name: "HIV 1 & 2 Antibodies (4th Gen)", shortName: "HIV", department: "Serology",
+   194→   194→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   195→   195→    unit: "—", tatHours: 12, resultType: "Pos/Neg", b2cPrice: 350, status: "Active",
+   196→   196→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "Non-Reactive ( Index < 1.0 )" }],
+   197→   197→  },
+   198→   198→  {
+   199→   199→    code: "CRP", name: "C-Reactive Protein (hs-CRP)", shortName: "CRP", department: "Immunology",
+   200→   200→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "Immunoturbidimetry",
+   201→   201→    unit: "mg/L", tatHours: 6, resultType: "Numeric", b2cPrice: 500, status: "Active",
+   202→   202→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "< 5.0 ( Cardiac risk: < 1.0 low )" }],
+   203→   203→  },
+   204→   204→  {
+   205→   205→    code: "PROCALC", name: "Procalcitonin", shortName: "PCT", department: "Immunology",
+   206→   206→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   207→   207→    unit: "ng/mL", tatHours: 12, resultType: "Numeric", b2cPrice: 1800, status: "Active",
+   208→   208→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "< 0.05" }],
+   209→   209→  },
+   210→   210→  {
+   211→   211→    code: "CULTURE-UR", name: "Urine Culture & Sensitivity", shortName: "Urine C/S", department: "Microbiology",
+   212→   212→    sampleType: "Urine (Random)", container: "Sterile Container", methodology: "Culture + Kirby-Bauer Disc Diffusion",
+   213→   213→    unit: "—", tatHours: 48, resultType: "Descriptive", b2cPrice: 650, status: "Active",
+   214→   214→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "No growth after 48 hrs incubation" }],
+   215→   215→  },
+   216→   216→  {
+   217→   217→    code: "AFB", name: "AFB Smear (Ziehl-Neelsen)", shortName: "AFB", department: "Microbiology",
+   218→   218→    sampleType: "Sputum", container: "Sterile Container", methodology: "ZN Stain Microscopy",
+   219→   219→    unit: "—", tatHours: 24, resultType: "Text", b2cPrice: 300, status: "Active",
+   220→   220→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "No AFB seen" }],
+   221→   221→  },
+   222→   222→  {
+   223→   223→    code: "TRUGENE", name: "CBNAAT (M. Tuberculosis)", shortName: "CBNAAT", department: "Molecular Biology",
+   224→   224→    sampleType: "Sputum", container: "Sterile Container", methodology: "Real-time PCR (CBNAAT)",
+   225→   225→    unit: "—", tatHours: 36, resultType: "Descriptive", b2cPrice: 2000, status: "Active",
+   226→   226→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "M. TB Not Detected · Rifampicin resistance Not Detected" }],
+   227→   227→  },
+   228→   228→  {
+   229→   229→    code: "BIOPSY", name: "Histopathology Examination (Biopsy)", shortName: "HPE", department: "Histopathology",
+   230→   230→    sampleType: "Tissue / Block", container: "Formalin Pot (10%)", methodology: "H&E Sectioning · Gross + Microscopy",
+   231→   231→    unit: "—", tatHours: 72, resultType: "Descriptive", b2cPrice: 2500, status: "Active",
+   232→   232→    refRanges: [{ sex: "Any", ageGroup: "Any", range: "— Descriptive report —" }],
+   233→   233→  },
+   234→   234→  {
+   235→   235→    code: "PAP", name: "Pap Smear (Liquid Based Cytology)", shortName: "LBC Pap", department: "Histopathology",
+   236→   236→    sampleType: "Swab (Viral)", container: "VTM Swab", methodology: "Liquid Based Cytology",
+   237→   237→    unit: "—", tatHours: 48, resultType: "Descriptive", b2cPrice: 1400, status: "Active",
+   238→   238→    refRanges: [{ sex: "Female", ageGroup: "Adult", range: "Negative for intraepithelial lesion (NILM)" }],
+   239→   239→  },
+   240→   240→  {
+   241→   241→    code: "BRCA", name: "BRCA 1 & 2 Mutation Analysis", shortName: "BRCA", department: "Molecular Biology",
+   242→   242→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "NGS (Next Generation Sequencing)",
+   243→   243→    unit: "—", tatHours: 336, resultType: "Descriptive", b2cPrice: 16500, status: "Active",
+   244→   244→    refRanges: [{ sex: "Female", ageGroup: "Adult", range: "No pathogenic variant detected" }],
+   245→   245→    interpretation: "Outsourced to Metropolis Reference Lab. Genetic counselling recommended before and after testing.",
+   246→   246→  },
+   247→   247→  {
+   248→   248→    code: "HLA-B27", name: "HLA B27 (Flow Cytometry)", shortName: "HLA-B27", department: "Immunology",
+   249→   249→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "Flow Cytometry",
+   250→   250→    unit: "—", tatHours: 48, resultType: "Pos/Neg", b2cPrice: 1600, status: "Active",
+   251→   251→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "Negative ( < 2% expression )" }],
+   252→   252→  },
+   253→   253→  {
+   254→   254→    code: "INSULIN-F", name: "Fasting Insulin", shortName: "Insulin", department: "Hormones",
+   255→   255→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   256→   256→    unit: "µIU/mL", tatHours: 12, resultType: "Numeric", b2cPrice: 650, status: "Active",
+   257→   257→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "2.6 – 24.9" }],
+   258→   258→  },
+   259→   259→  {
+   260→   260→    code: "PSA", name: "Prostate Specific Antigen (Total)", shortName: "PSA", department: "Hormones",
+   261→   261→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+   262→   262→    unit: "ng/mL", tatHours: 12, resultType: "Numeric", b2cPrice: 700, status: "Active",
+   263→   263→    refRanges: [{ sex: "Male", ageGroup: "Adult (>40 yr)", range: "0 – 4.0" }],
+   264→   264→  },
+   265→   265→];
+   266→   266→
+   267→   267→export const testGroups: TestGroup[] = [
+   268→   268→  { id: "TG-01", name: "Routine Haematology", description: "CBC, ESR, Peripheral Smear and coagulation assays", tests: ["CBC", "ESR"], status: "Active" },
+   269→   269→  { id: "TG-02", name: "Thyroid", description: "Thyroid function panel — TSH, FT3, FT4", tests: ["TSH", "FT4"], status: "Active" },
+   270→   270→  { id: "TG-03", name: "Diabetes", description: "Glycaemic control and monitoring assays", tests: ["FBS", "HBA1C", "INSULIN-F"], status: "Active" },
+   271→   271→  { id: "TG-04", name: "Lipid", description: "Cardiac lipid risk markers", tests: ["LIPID"], status: "Active" },
+   272→   272→  { id: "TG-05", name: "Liver", description: "Hepatic function enzymes and bilirubin", tests: ["LFT"], status: "Active" },
+   273→   273→  { id: "TG-06", name: "Kidney", description: "Renal function markers", tests: ["KFT"], status: "Active" },
+   274→   274→  { id: "TG-07", name: "Vitamins", description: "Nutritional vitamin assays", tests: ["VITD", "VITB12"], status: "Active" },
+   275→   275→  { id: "TG-08", name: "Fever Panel", description: "Seasonal fever screening assays", tests: ["DENGUE-NS1", "WIDAL", "CBC"], status: "Active" },
+   276→   276→  { id: "TG-09", name: "Iron Studies", description: "Iron deficiency workup", tests: ["FERR"], status: "Active" },
+   277→   277→];
+   278→   278→
+   279→   279→export const packages: PackageItem[] = [
+   280→   280→  {
+   281→   281→    code: "PKG-FULL-ADV", name: "Full Body Checkup — Advanced", b2cPrice: 1999, tatHours: 24,
+   282→   282→    tests: ["CBC", "LFT", "KFT", "LIPID", "FBS", "HBA1C", "TSH", "VITD", "VITB12", "URINE-R", "ESR"],
+   283→   283→    includes: "62 parameters · Free doctor teleconsult · Fasting 10 hrs",
+   284→   284→    status: "Active",
+   285→   285→  },
+   286→   286→  {
+   287→   287→    code: "PKG-DIABETES", name: "Diabetes Care Package", b2cPrice: 1099, tatHours: 24,
+   288→   288→    tests: ["FBS", "HBA1C", "LIPID", "KFT", "URINE-R", "INSULIN-F"],
+   289→   289→    includes: "Diabetic profile with insulin resistance assessment",
+   290→   290→    status: "Active",
+   291→   291→  },
+   292→   292→  {
+   293→   293→    code: "PKG-FEVER", name: "Fever Panel — Basic", b2cPrice: 899, tatHours: 12,
+   294→   294→    tests: ["CBC", "DENGUE-NS1", "WIDAL", "URINE-R"],
+   295→   295→    includes: "Monsoon fever screening panel",
+   296→   296→    status: "Active",
+   297→   297→  },
+   298→   298→  {
+   299→   299→    code: "PKG-THYROID", name: "Thyroid Care Package", b2cPrice: 699, tatHours: 12,
+   300→   300→    tests: ["TSH", "FT4", "CBC"],
+   301→   301→    includes: "Complete thyroid screening",
+   302→   302→    status: "Active",
+   303→   303→  },
+   304→   304→  {
+   305→   305→    code: "PKG-SENIOR", name: "Senior Citizen Package (60+)", b2cPrice: 2499, tatHours: 24,
+   306→   306→    tests: ["CBC", "LFT", "KFT", "LIPID", "FBS", "HBA1C", "TSH", "PSA", "VITD", "URINE-R", "ESR"],
+   307→   307→    includes: "Age-specific screening · Home collection included",
+   308→   308→    status: "Active",
+   309→   309→  },
+   310→   310→  {
+   311→   311→    code: "PKG-WOMEN", name: "Women's Wellness Package", b2cPrice: 2199, tatHours: 24,
+   312→   312→    tests: ["CBC", "TSH", "VITD", "VITB12", "FERR", "PAP", "LIPID", "FBS"],
+   313→   313→    includes: "Includes LBC Pap smear · Iron studies",
+   314→   314→    status: "Active",
+   315→   315→  },
+   316→   316→];
+   317→   317→
+   318→   318→// ---------- B2B network ----------
+   319→   319→export const partners: Partner[] = [
+   320→   320→  {
+   321→   321→    id: "B2B-001", code: "ABC", name: "ABC Diagnostics", city: "Mumbai", contactPerson: "Rajesh Malhotra",
+   322→   322→    mobile: "+91 98200 11223", email: "rajesh@abcdiagnostics.in", joinedOn: "2023-04-12",
+   323→   323→    creditLimit: 300000, openingBalance: 42500, outstanding: 118400, discountPct: 40, pricingTier: "Tier 1 — Volume",
+   324→   324→    subAgencies: 3, status: "Active", lastSettlement: "2026-09-10",
+   325→   325→  },
+   326→   326→  {
+   327→   327→    id: "B2B-002", code: "HPC", name: "HealthPoint Collection Centre", city: "Thane", contactPerson: "Sunita Rane",
+   328→   328→    mobile: "+91 98200 44556", email: "sunita@healthpoint.co.in", joinedOn: "2023-08-03",
+   329→   329→    creditLimit: 200000, openingBalance: 0, outstanding: 46750, discountPct: 35, pricingTier: "Tier 2 — Standard",
+   330→   330→    subAgencies: 1, status: "Active", lastSettlement: "2026-09-18",
+   331→   331→  },
+   332→   332→  {
+   333→   333→    id: "B2B-003", code: "MDX", name: "Medipoint Diagnostics", city: "Nashik", contactPerson: "Amit Bhalerao",
+   334→   334→    mobile: "+91 98220 77889", email: "amit@medipoint.in", joinedOn: "2024-01-25",
+   335→   335→    creditLimit: 150000, openingBalance: 12000, outstanding: 89200, discountPct: 32, pricingTier: "Tier 2 — Standard",
+   336→   336→    subAgencies: 0, status: "Active", lastSettlement: "2026-08-30",
+   337→   337→  },
+   338→   338→  {
+   339→   339→    id: "B2B-004", code: "CPL", name: "CityCare Path Labs", city: "Pune", contactPerson: "Vivek Joshi",
+   340→   340→    mobile: "+91 99220 33445", email: "vivek@citycarepath.com", joinedOn: "2024-06-14",
+   341→   341→    creditLimit: 250000, openingBalance: 0, outstanding: 20400, discountPct: 38, pricingTier: "Tier 1 — Volume",
+   342→   342→    subAgencies: 2, status: "Active", lastSettlement: "2026-09-22",
+   343→   343→  },
+   344→   344→  {
+   345→   345→    id: "B2B-005", code: "ZHC", name: "Zenith Hospital Collection", city: "Navi Mumbai", contactPerson: "Farida Shaikh",
+   346→   346→    mobile: "+91 98920 66778", email: "farida@zenithhosp.in", joinedOn: "2025-02-08",
+   347→   347→    creditLimit: 100000, openingBalance: 0, outstanding: 0, discountPct: 30, pricingTier: "Tier 3 — New",
+   348→   348→    subAgencies: 0, status: "Active", lastSettlement: "2026-09-25",
+   349→   349→  },
+   350→   350→  {
+   351→   351→    id: "B2B-006", code: "GDX", name: "GreenLeaf Diagnostics", city: "Vasai", contactPerson: "Prakash Naik",
+   352→   352→    mobile: "+91 98670 99001", email: "prakash@greenleafdiag.in", joinedOn: "2025-09-01",
+   353→   353→    creditLimit: 50000, openingBalance: 0, outstanding: 15800, discountPct: 25, pricingTier: "Tier 3 — New",
+   354→   354→    subAgencies: 0, status: "Suspended", lastSettlement: "2026-06-30",
+   355→   355→  },
+   356→   356→];
+   357→   357→
+   358→   358→export const subAgencies: SubAgency[] = [
+   359→   359→  {
+   360→   360→    id: "SUB-001", parentId: "B2B-001", parentName: "ABC Diagnostics", name: "XYZ Collection Centre", city: "Mumbai",
+   361→   361→    contactPerson: "Imran Qureshi", mobile: "+91 90040 12345", email: "imran@xyzcollection.in", joinedOn: "2024-02-10",
+   362→   362→    status: "Active", monthlyBusiness: 184000, outstanding: 22300,
+   363→   363→  },
+   364→   364→  {
+   365→   365→    id: "SUB-002", parentId: "B2B-001", parentName: "ABC Diagnostics", name: "Health Point", city: "Mumbai",
+   366→   366→    contactPerson: "Deepa Kamble", mobile: "+91 90040 23456", email: "deepa@healthpoint.in", joinedOn: "2024-05-21",
+   367→   367→    status: "Active", monthlyBusiness: 121500, outstanding: 8700,
+   368→   368→  },
+   369→   369→  {
+   370→   370→    id: "SUB-003", parentId: "B2B-001", parentName: "ABC Diagnostics", name: "Maa Diagnostics", city: "Mumbai",
+   371→   371→    contactPerson: "Shyam Sunder Gupta", mobile: "+91 90040 34567", email: "shyam@maadiag.in", joinedOn: "2024-11-05",
+   372→   372→    status: "Active", monthlyBusiness: 96800, outstanding: 14100,
+   373→   373→  },
+   374→   374→  {
+   375→   375→    id: "SUB-004", parentId: "B2B-002", parentName: "HealthPoint Collection Centre", name: "Sunrise Collection Point", city: "Thane",
+   376→   376→    contactPerson: "Nitin Wagh", mobile: "+91 90220 45678", email: "nitin@sunrisecp.in", joinedOn: "2025-03-18",
+   377→   377→    status: "Active", monthlyBusiness: 64300, outstanding: 5200,
+   378→   378→  },
+   379→   379→  {
+   380→   380→    id: "SUB-005", parentId: "B2B-004", parentName: "CityCare Path Labs", name: "Kothrud Collection Centre", city: "Pune",
+   381→   381→    contactPerson: "Manisha Deshpande", mobile: "+91 91450 56789", email: "manisha@kothrudcc.in", joinedOn: "2025-07-09",
+   382→   382→    status: "Active", monthlyBusiness: 78050, outstanding: 6900,
+   383→   383→  },
+   384→   384→  {
+   385→   385→    id: "SUB-006", parentId: "B2B-004", parentName: "CityCare Path Labs", name: "Hadapsar Path Services", city: "Pune",
+   386→   386→    contactPerson: "Ganesh Shinde", mobile: "+91 91450 67890", email: "ganesh@hadapsarps.in", joinedOn: "2025-11-27",
+   387→   387→    status: "Inactive", monthlyBusiness: 21300, outstanding: 0,
+   388→   388→  },
+   389→   389→];
+   390→   390→
+   391→   391→// ---------- Patients ----------
+   392→   392→export const patients: Patient[] = [
+   393→   393→  { id: "PAT-00124", name: "Rahul Sharma", dob: "1992-03-14", age: 34, gender: "Male", mobile: "+91 98331 22001", email: "rahul.sharma@gmail.com", address: "B-702, Orchid Towers, Powai", city: "Mumbai", idProof: "Aadhaar XXXX 4412", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-08-02" },
+   394→   394→  { id: "PAT-00125", name: "Priya Nair", dob: "1988-11-02", age: 37, gender: "Female", mobile: "+91 98331 22002", email: "priya.nair@outlook.com", address: "14, Sea Breeze Apts, Bandra West", city: "Mumbai", idProof: "Aadhaar XXXX 8803", source: "ABC Diagnostics", channel: "B2B", sourceId: "B2B-001", registeredOn: "2026-08-14" },
+   395→   395→  { id: "PAT-00126", name: "Amit Patel", dob: "1979-06-28", age: 47, gender: "Male", mobile: "+91 98331 22003", email: "amit.patel@yahoo.in", address: "22, Rushivan Society, Thane West", city: "Thane", idProof: "PAN ABKPP1234L", source: "HealthPoint Collection Centre", channel: "B2B", sourceId: "B2B-002", registeredOn: "2026-08-21" },
+   396→   396→  { id: "PAT-00127", name: "Sneha Gupta", dob: "1995-01-19", age: 31, gender: "Female", mobile: "+91 98331 22004", email: "sneha.g@gmail.com", address: "901, Lake Homes, Chandivali", city: "Mumbai", idProof: "Aadhaar XXXX 1298", source: "XYZ Collection Centre", channel: "SUB", sourceId: "SUB-001", registeredOn: "2026-09-01" },
+   397→   397→  { id: "PAT-00128", name: "Mohammed Farhan", dob: "1984-09-08", age: 42, gender: "Male", mobile: "+91 98331 22005", email: "m.farhan@gmail.com", address: "5, Noor Manzil, Bhendi Bazaar", city: "Mumbai", idProof: "Aadhaar XXXX 6675", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-03" },
+   398→   398→  { id: "PAT-00129", name: "Kavita Joshi", dob: "1971-04-25", age: 55, gender: "Female", mobile: "+91 98331 22006", email: "kavita.joshi@gmail.com", address: "Plot 7, Sainath Nagar, Nashik Rd", city: "Nashik", idProof: "Aadhaar XXXX 3390", source: "Medipoint Diagnostics", channel: "B2B", sourceId: "B2B-003", registeredOn: "2026-09-05" },
+   399→   399→  { id: "PAT-00130", name: "Rajesh Kumar", dob: "1968-12-11", age: 57, gender: "Male", mobile: "+91 98331 22007", email: "rajesh.k78@gmail.com", address: "31, Shivaji Housing Soc, Dadar East", city: "Mumbai", idProof: "Aadhaar XXXX 7754", source: "ABC Diagnostics", channel: "B2B", sourceId: "B2B-001", registeredOn: "2026-09-08" },
+   400→   400→  { id: "PAT-00131", name: "Anita Desai", dob: "1990-07-30", age: 36, gender: "Female", mobile: "+91 98331 22008", email: "anita.desai@gmail.com", address: "A-1104, Lodha Amara, Thane", city: "Thane", idProof: "Aadhaar XXXX 9912", source: "Sunrise Collection Point", channel: "SUB", sourceId: "SUB-004", registeredOn: "2026-09-10" },
+   401→   401→  { id: "PAT-00132", name: "Suresh Menon", dob: "1962-02-17", age: 64, gender: "Male", mobile: "+91 98331 22009", email: "suresh.menon64@gmail.com", address: "8, Silver Oak, Chembur", city: "Mumbai", idProof: "Aadhaar XXXX 2256", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-12" },
+   402→   402→  { id: "PAT-00133", name: "Divya Iyer", dob: "1993-10-05", age: 32, gender: "Female", mobile: "+91 98331 22010", email: "divya.iyer@gmail.com", address: "402, Ananta Serene, Kolshet Rd", city: "Thane", idProof: "Aadhaar XXXX 5143", source: "HealthPoint Collection Centre", channel: "B2B", sourceId: "B2B-002", registeredOn: "2026-09-14" },
+   403→   403→  { id: "PAT-00134", name: "Arjun Singh", dob: "1986-05-22", age: 40, gender: "Male", mobile: "+91 98331 22011", email: "arjun.singh@gmail.com", address: "C-9, Staff Quarters, SEEPZ", city: "Mumbai", idProof: "PAN ARPS5678K", source: "XYZ Collection Centre", channel: "SUB", sourceId: "SUB-001", registeredOn: "2026-09-16" },
+   404→   404→  { id: "PAT-00135", name: "Meera Chatterjee", dob: "1975-08-14", age: 51, gender: "Female", mobile: "+91 98331 22012", email: "meera.c@gmail.com", address: "18, Fairlawn, Wadala West", city: "Mumbai", idProof: "Aadhaar XXXX 8290", source: "Maa Diagnostics", channel: "SUB", sourceId: "SUB-003", registeredOn: "2026-09-18" },
+   405→   405→  { id: "PAT-00136", name: "Vikas Verma", dob: "1981-01-09", age: 45, gender: "Male", mobile: "+91 98331 22013", email: "vikas.verma@gmail.com", address: "6, Kunal Icon, Pimple Saudagar", city: "Pune", idProof: "Aadhaar XXXX 4033", source: "CityCare Path Labs", channel: "B2B", sourceId: "B2B-004", registeredOn: "2026-09-19" },
+   406→   406→  { id: "PAT-00137", name: "Pooja Shetty", dob: "1996-03-27", age: 30, gender: "Female", mobile: "+91 98331 22014", email: "pooja.shetty@gmail.com", address: "301, Green Park, Kothrud", city: "Pune", idProof: "Aadhaar XXXX 6601", source: "Kothrud Collection Centre", channel: "SUB", sourceId: "SUB-005", registeredOn: "2026-09-20" },
+   407→   407→  { id: "PAT-00138", name: "Rohan Mehta", dob: "1998-12-03", age: 27, gender: "Male", mobile: "+91 98331 22015", email: "rohan.mehta@gmail.com", address: "7, Sunrise CHS, Vashi", city: "Navi Mumbai", idProof: "Aadhaar XXXX 7189", source: "Zenith Hospital Collection", channel: "B2B", sourceId: "B2B-005", registeredOn: "2026-09-22" },
+   408→   408→  { id: "PAT-00139", name: "Lakshmi Raman", dob: "1957-06-16", age: 69, gender: "Female", mobile: "+91 98331 22016", email: "lakshmi.raman@gmail.com", address: "12, Brindavan Society, Matunga", city: "Mumbai", idProof: "Aadhaar XXXX 0972", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-23" },
+   409→   409→  { id: "PAT-00140", name: "Imran Sheikh", dob: "1989-09-21", age: 37, gender: "Male", mobile: "+91 98331 22017", email: "imran.sheikh@gmail.com", address: "44, Mumbra Bypass Rd, Mumbra", city: "Thane", idProof: "Aadhaar XXXX 8845", source: "Health Point", channel: "SUB", sourceId: "SUB-002", registeredOn: "2026-09-24" },
+   410→   410→  { id: "PAT-00141", name: "Geeta Bhandari", dob: "1983-02-08", age: 43, gender: "Female", mobile: "+91 98331 22018", email: "geeta.b@gmail.com", address: "9, Shanti Nagar, Sakinaka", city: "Mumbai", idProof: "Aadhaar XXXX 5521", source: "ABC Diagnostics", channel: "B2B", sourceId: "B2B-001", registeredOn: "2026-09-25" },
+   411→   411→  { id: "PAT-00142", name: "Nikhil Agarwal", dob: "1991-11-29", age: 34, gender: "Male", mobile: "+91 98331 22019", email: "nikhil.a@gmail.com", address: "802, Marathon Futurex, Lower Parel", city: "Mumbai", idProof: "Aadhaar XXXX 3388", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-26" },
+   412→   412→  { id: "PAT-00143", name: "Shalini Verma", dob: "1966-04-03", age: 60, gender: "Female", mobile: "+91 98331 22020", email: "shalini.v@gmail.com", address: "3, Palm Beach Rd, Sanpada", city: "Navi Mumbai", idProof: "Aadhaar XXXX 7702", source: "Zenith Hospital Collection", channel: "B2B", sourceId: "B2B-005", registeredOn: "2026-09-27" },
+   413→   413→];
+   414→   414→
+   415→   415→// ---------- Referring doctors ----------
+   416→   416→export const doctors = [
+   417→   417→  { id: "DR-01", name: "Dr. Suresh Mehta", speciality: "General Physician", hospital: "Mehta Clinic, Powai", referralPct: 10 },
+   418→   418→  { id: "DR-02", name: "Dr. Rekha Iyer", speciality: "Endocrinologist", hospital: "Iyer Diabetes Centre, Sion", referralPct: 10 },
+   419→   419→  { id: "DR-03", name: "Dr. Aditya Kulkarni", speciality: "Cardiologist", hospital: "HeartCare, Dadar", referralPct: 8 },
+   420→   420→  { id: "DR-04", name: "Dr. Farida Contractor", speciality: "Pathologist", hospital: "Apex Labs — In-house", referralPct: 0 },
+   421→   421→  { id: "DR-05", name: "Dr. Sameer Bhagwat", speciality: "Oncologist", hospital: "Sion Hospital (Visiting)", referralPct: 8 },
+   422→   422→  { id: "DR-06", name: "Dr. Meenakshi Rao", speciality: "Gynaecologist", hospital: "MatriCare, Thane", referralPct: 10 },
+   423→   423→];
+   424→   424→
+   425→   425→// ---------- Pathologists ----------
+   426→   426→export const pathologists: Pathologist[] = [
+   427→   427→  { id: "PATH-01", name: "Dr. Anjali Deshpande", qualification: "MD (Pathology)", regNo: "MMC/2010/24315", speciality: "Haematology & Clinical Pathology", mobile: "+91 98200 71001", email: "anjali.d@apexlabs.in", signatureOnFile: true, status: "Active" },
+   428→   428→  { id: "PATH-02", name: "Dr. Vikram Rao", qualification: "MD (Biochemistry), DNB", regNo: "MMC/2008/19204", speciality: "Biochemistry & Immunology", mobile: "+91 98200 71002", email: "vikram.rao@apexlabs.in", signatureOnFile: true, status: "Active" },
+   429→   429→  { id: "PATH-03", name: "Dr. Farida Contractor", qualification: "MD (Pathology), FRCPath", regNo: "MMC/2005/11028", speciality: "Histopathology & Cytology", mobile: "+91 98200 71003", email: "farida.c@apexlabs.in", signatureOnFile: true, status: "Active" },
+   430→   430→  { id: "PATH-04", name: "Dr. Sanjay Mukherjee", qualification: "MD (Microbiology)", regNo: "MMC/2012/30188", speciality: "Microbiology & Molecular", mobile: "+91 98200 71004", email: "sanjay.m@apexlabs.in", signatureOnFile: false, status: "Active" },
+   431→   431→];
+   432→   432→
+   433→   433→// ---------- Branches / Couriers / Templates ----------
+   434→   434→export const branches: Branch[] = [
+   435→   435→  { id: "BR-01", name: "Central Reference Lab — Andheri", type: "Central Lab", city: "Mumbai", address: "Plot 14, MIDC Health Square, Andheri East", incharge: "Dr. Anjali Deshpande", mobile: "+91 22 4890 1234", status: "Active" },
+   436→   436→  { id: "BR-02", name: "Apex Collection Point — Powai", type: "Collection Centre", city: "Mumbai", address: "Shop 9, Galleria Mall, Powai", incharge: "Sarita Kadam", mobile: "+91 98200 71201", status: "Active" },
+   437→   437→  { id: "BR-03", name: "Apex Collection Point — Dadar", type: "Collection Centre", city: "Mumbai", address: "217, Ranade Road, Dadar West", incharge: "Mohan Pillai", mobile: "+91 98200 71202", status: "Active" },
+   438→   438→  { id: "BR-04", name: "Apex Sample Hub — Thane", type: "Processing Unit", city: "Thane", address: "16, Ghodbunder Industrial Est.", incharge: "Rekha Sawant", mobile: "+91 98200 71203", status: "Active" },
+   439→   439→  { id: "BR-05", name: "Apex Collection Point — Vashi", type: "Collection Centre", city: "Navi Mumbai", address: "Station Complex, Sector 17", incharge: "Anthony Dsouza", mobile: "+91 98200 71204", status: "Inactive" },
+   440→   440→];
+   441→   441→
+   442→   442→export const couriers: Courier[] = [
+   443→   443→  { id: "CUR-01", name: "BlueDart Med Express", type: "Agency", contactPerson: "Sanjay Patil", mobile: "+91 98330 51001", cities: "Mumbai · Thane · Navi Mumbai", dailyTrips: 6, status: "Active" },
+   444→   444→  { id: "CUR-02", name: "Delhivery Health", type: "Agency", contactPerson: "Ravi Nair", mobile: "+91 98330 51002", cities: "Pune · Nashik", dailyTrips: 3, status: "Active" },
+   445→   445→  { id: "CUR-03", name: "LabRunners", type: "Agency", contactPerson: "Deepak Yadav", mobile: "+91 98330 51003", cities: "Mumbai · Vasai", dailyTrips: 4, status: "Active" },
+   446→   446→  { id: "CUR-04", name: "Apex In-house Van", type: "In-house", contactPerson: "Ramesh Bhosale", mobile: "+91 98330 51004", cities: "Andheri · Powai · Dadar routes", dailyTrips: 8, status: "Active" },
+   447→   447→];
+   448→   448→
+   449→   449→export const reportTemplates: ReportTemplate[] = [
+   450→   450→  { id: "RT-01", name: "Standard Clinical Report", appliesTo: "All routine tests", format: "A4 Portrait", header: "Apex default header with NABL logo", footer: "Report footer with QR + disclaimer", hasQr: true, hasSignature: true, status: "Active" },
+   451→   451→  { id: "RT-02", name: "Histopathology Report", appliesTo: "HPE, Cytology, Pap", format: "A4 Portrait (2 page)", header: "Descriptive header with specimen block", footer: "Pathologist signature + gross image note", hasQr: true, hasSignature: true, status: "Active" },
+   452→   452→  { id: "RT-03", name: "Microbiology & Culture Report", appliesTo: "Cultures, AFB, CBNAAT", format: "A4 Portrait", header: "Micro header with incubation note", footer: "Standard footer", hasQr: true, hasSignature: true, status: "Active" },
+   453→   453→  { id: "RT-04", name: "Molecular / NGS Report", appliesTo: "BRCA, genetic panels", format: "A4 Portrait (4 page)", header: "Genetic disclaimer header", footer: "Genetic counselling note", hasQr: true, hasSignature: true, status: "Active" },
+   454→   454→  { id: "RT-05", name: "B2B Bulk Report Format", appliesTo: "B2B partner portal prints", format: "A4 Landscape batch", header: "Partner co-branded header", footer: "Batch footer with page x of y", hasQr: true, hasSignature: true, status: "Active" },
+   455→   455→];
+   456→   456→
+   457→   457→// ---------- Pricing rules ----------
+   458→   458→// Hierarchy: B2C list price -> B2B price -> Sub-agency price
+   459→   459→export const priceRules: PriceRule[] = [
+   460→   460→  // B2C (list price mirrors TestMaster.b2cPrice)
+   461→   461→  ...tests.map((t, i) => ({
+   462→   462→    id: `PR-B2C-${String(i + 1).padStart(3, "0")}`,
+   463→   463→    testCode: t.code, testName: t.name, scope: "B2C" as const, scopeId: "ALL", scopeName: "Patient (B2C List)",
+   464→   464→    price: t.b2cPrice, effectiveFrom: "2026-04-01", status: "Active" as const,
+   465→   465→  })),
+   466→   466→  // ABC Diagnostics (Tier 1 ~ 50-55% off list)
+   467→   467→  ...[
+   468→   468→    ["CBC", 150], ["TSH", 220], ["HBA1C", 250], ["LFT", 300], ["KFT", 300], ["LIPID", 280],
+   469→   469→    ["FBS", 80], ["VITD", 650], ["VITB12", 550], ["ESR", 90], ["URINE-R", 110],
+   470→   470→    ["DENGUE-NS1", 320], ["WIDAL", 140], ["HBSAG", 170], ["HIV", 190], ["CRP", 280],
+   471→   471→    ["FERR", 420], ["PSA", 380], ["PROCALC", 950], ["CULTURE-UR", 360], ["AFB", 170],
+   472→   472→    ["TRUGENE", 1050], ["HLA-B27", 850], ["FT4", 190], ["INSULIN-F", 350],
+   473→   473→  ].map(([code, price], i) => ({
+   474→   474→    id: `PR-B2B-001-${String(i + 1).padStart(3, "0")}`,
+   475→   475→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   476→   476→    scope: "B2B" as const, scopeId: "B2B-001", scopeName: "ABC Diagnostics",
+   477→   477→    price: price as number, effectiveFrom: "2026-04-01", minQty: 10, status: "Active" as const,
+   478→   478→  })),
+   479→   479→  // HealthPoint (Tier 2)
+   480→   480→  ...[
+   481→   481→    ["CBC", 180], ["TSH", 250], ["HBA1C", 290], ["LFT", 340], ["KFT", 340], ["LIPID", 320], ["FBS", 90],
+   482→   482→    ["VITD", 720], ["VITB12", 610], ["ESR", 110], ["URINE-R", 130], ["DENGUE-NS1", 380], ["WIDAL", 160],
+   483→   483→  ].map(([code, price], i) => ({
+   484→   484→    id: `PR-B2B-002-${String(i + 1).padStart(3, "0")}`,
+   485→   485→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   486→   486→    scope: "B2B" as const, scopeId: "B2B-002", scopeName: "HealthPoint Collection Centre",
+   487→   487→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   488→   488→  })),
+   489→   489→  // Medipoint (Tier 2)
+   490→   490→  ...[
+   491→   491→    ["CBC", 190], ["TSH", 265], ["HBA1C", 300], ["LFT", 355], ["KFT", 355], ["LIPID", 335], ["FBS", 95],
+   492→   492→    ["VITD", 760], ["WIDAL", 170], ["DENGUE-NS1", 395], ["URINE-R", 140], ["ESR", 115],
+   493→   493→  ].map(([code, price], i) => ({
+   494→   494→    id: `PR-B2B-003-${String(i + 1).padStart(3, "0")}`,
+   495→   495→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   496→   496→    scope: "B2B" as const, scopeId: "B2B-003", scopeName: "Medipoint Diagnostics",
+   497→   497→    price: price as number, effectiveFrom: "2026-07-01", status: "Active" as const,
+   498→   498→  })),
+   499→   499→  // CityCare (Tier 1)
+   500→   500→  ...[
+   501→   501→    ["CBC", 160], ["TSH", 230], ["HBA1C", 260], ["LFT", 310], ["KFT", 310], ["LIPID", 295], ["FBS", 85],
+   502→   502→    ["VITD", 680], ["VITB12", 570], ["PSA", 400], ["URINE-R", 115], ["ESR", 95], ["CRP", 290],
+   503→   503→  ].map(([code, price], i) => ({
+   504→   504→    id: `PR-B2B-004-${String(i + 1).padStart(3, "0")}`,
+   505→   505→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   506→   506→    scope: "B2B" as const, scopeId: "B2B-004", scopeName: "CityCare Path Labs",
+   507→   507→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   508→   508→  })),
+   509→   509→  // Zenith (Tier 3)
+   510→   510→  ...[
+   511→   511→    ["CBC", 210], ["TSH", 290], ["HBA1C", 320], ["LFT", 380], ["KFT", 380], ["LIPID", 360], ["FBS", 100],
+   512→   512→  ].map(([code, price], i) => ({
+   513→   513→    id: `PR-B2B-005-${String(i + 1).padStart(3, "0")}`,
+   514→   514→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   515→   515→    scope: "B2B" as const, scopeId: "B2B-005", scopeName: "Zenith Hospital Collection",
+   516→   516→    price: price as number, effectiveFrom: "2026-02-08", status: "Active" as const,
+   517→   517→  })),
+   518→   518→  // Sub-agencies under ABC (parent cost + margin)
+   519→   519→  ...[
+   520→   520→    ["CBC", 180], ["TSH", 260], ["HBA1C", 295], ["LFT", 350], ["KFT", 350], ["LIPID", 330], ["FBS", 95], ["VITD", 730],
+   521→   521→  ].map(([code, price], i) => ({
+   522→   522→    id: `PR-SUB-001-${String(i + 1).padStart(3, "0")}`,
+   523→   523→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   524→   524→    scope: "SUB" as const, scopeId: "SUB-001", scopeName: "XYZ Collection Centre (via ABC)",
+   525→   525→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   526→   526→  })),
+   527→   527→  ...[
+   528→   528→    ["CBC", 190], ["TSH", 270], ["HBA1C", 305], ["LFT", 360], ["KFT", 360], ["LIPID", 340], ["FBS", 100],
+   529→   529→  ].map(([code, price], i) => ({
+   530→   530→    id: `PR-SUB-002-${String(i + 1).padStart(3, "0")}`,
+   531→   531→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   532→   532→    scope: "SUB" as const, scopeId: "SUB-002", scopeName: "Health Point (via ABC)",
+   533→   533→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   534→   534→  })),
+   535→   535→  ...[
+   536→   536→    ["CBC", 200], ["TSH", 280], ["HBA1C", 315], ["LFT", 370], ["KFT", 370], ["LIPID", 350], ["FBS", 105],
+   537→   537→  ].map(([code, price], i) => ({
+   538→   538→    id: `PR-SUB-003-${String(i + 1).padStart(3, "0")}`,
+   539→   539→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   540→   540→    scope: "SUB" as const, scopeId: "SUB-003", scopeName: "Maa Diagnostics (via ABC)",
+   541→   541→    price: price as number, effectiveFrom: "2026-06-15", status: "Active" as const,
+   542→   542→  })),
+   543→   543→  ...[
+   544→   544→    ["CBC", 205], ["TSH", 285], ["HBA1C", 320], ["LFT", 375], ["KFT", 375], ["LIPID", 355],
+   545→   545→  ].map(([code, price], i) => ({
+   546→   546→    id: `PR-SUB-004-${String(i + 1).padStart(3, "0")}`,
+   547→   547→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   548→   548→    scope: "SUB" as const, scopeId: "SUB-005", scopeName: "Kothrud Collection Centre (via CityCare)",
+   549→   549→    price: price as number, effectiveFrom: "2026-07-09", status: "Active" as const,
+   550→   550→  })),
+   551→   551→  // Special promotional price
+   552→   552→  {
+   553→   553→    id: "PR-SPC-001", testCode: "VITD", testName: "Vitamin D (25-OH)", scope: "B2C", scopeId: "ALL",
+   554→   554→    scopeName: "Monsoon Promo — B2C", price: 999, effectiveFrom: "2026-09-01", effectiveTo: "2026-09-30",
+   555→   555→    status: "Active",
+   556→   556→  },
+   557→   557→  {
+   558→   558→    id: "PR-SPC-002", testCode: "PKG-FULL-ADV", testName: "Full Body Checkup — Advanced", scope: "B2B",
+   559→   559→    scopeId: "B2B-001", scopeName: "ABC Diagnostics — Volume Deal", price: 950, effectiveFrom: "2026-09-15",
+   560→   560→    minQty: 25, status: "Active",
+   561→   561→  },
+   562→   562→];
+   563→   563→

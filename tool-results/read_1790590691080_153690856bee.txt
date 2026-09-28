@@ -1,0 +1,340 @@
+     1→   224→    sampleType: "Sputum", container: "Sterile Container", methodology: "Real-time PCR (CBNAAT)",
+     2→   225→    unit: "—", tatHours: 36, resultType: "Descriptive", b2cPrice: 2000, status: "Active",
+     3→   226→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "M. TB Not Detected · Rifampicin resistance Not Detected" }],
+     4→   227→  },
+     5→   228→  {
+     6→   229→    code: "BIOPSY", name: "Histopathology Examination (Biopsy)", shortName: "HPE", department: "Histopathology",
+     7→   230→    sampleType: "Tissue / Block", container: "Formalin Pot (10%)", methodology: "H&E Sectioning · Gross + Microscopy",
+     8→   231→    unit: "—", tatHours: 72, resultType: "Descriptive", b2cPrice: 2500, status: "Active",
+     9→   232→    refRanges: [{ sex: "Any", ageGroup: "Any", range: "— Descriptive report —" }],
+    10→   233→  },
+    11→   234→  {
+    12→   235→    code: "PAP", name: "Pap Smear (Liquid Based Cytology)", shortName: "LBC Pap", department: "Histopathology",
+    13→   236→    sampleType: "Swab (Viral)", container: "VTM Swab", methodology: "Liquid Based Cytology",
+    14→   237→    unit: "—", tatHours: 48, resultType: "Descriptive", b2cPrice: 1400, status: "Active",
+    15→   238→    refRanges: [{ sex: "Female", ageGroup: "Adult", range: "Negative for intraepithelial lesion (NILM)" }],
+    16→   239→  },
+    17→   240→  {
+    18→   241→    code: "BRCA", name: "BRCA 1 & 2 Mutation Analysis", shortName: "BRCA", department: "Molecular Biology",
+    19→   242→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "NGS (Next Generation Sequencing)",
+    20→   243→    unit: "—", tatHours: 336, resultType: "Descriptive", b2cPrice: 16500, status: "Active",
+    21→   244→    refRanges: [{ sex: "Female", ageGroup: "Adult", range: "No pathogenic variant detected" }],
+    22→   245→    interpretation: "Outsourced to Metropolis Reference Lab. Genetic counselling recommended before and after testing.",
+    23→   246→  },
+    24→   247→  {
+    25→   248→    code: "HLA-B27", name: "HLA B27 (Flow Cytometry)", shortName: "HLA-B27", department: "Immunology",
+    26→   249→    sampleType: "Whole Blood EDTA", container: "EDTA Vacutainer (Lavender)", methodology: "Flow Cytometry",
+    27→   250→    unit: "—", tatHours: 48, resultType: "Pos/Neg", b2cPrice: 1600, status: "Active",
+    28→   251→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "Negative ( < 2% expression )" }],
+    29→   252→  },
+    30→   253→  {
+    31→   254→    code: "INSULIN-F", name: "Fasting Insulin", shortName: "Insulin", department: "Hormones",
+    32→   255→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+    33→   256→    unit: "µIU/mL", tatHours: 12, resultType: "Numeric", b2cPrice: 650, status: "Active",
+    34→   257→    refRanges: [{ sex: "Any", ageGroup: "Adult", range: "2.6 – 24.9" }],
+    35→   258→  },
+    36→   259→  {
+    37→   260→    code: "PSA", name: "Prostate Specific Antigen (Total)", shortName: "PSA", department: "Hormones",
+    38→   261→    sampleType: "Serum", container: "Plain Vacutainer (Red)", methodology: "CMIA",
+    39→   262→    unit: "ng/mL", tatHours: 12, resultType: "Numeric", b2cPrice: 700, status: "Active",
+    40→   263→    refRanges: [{ sex: "Male", ageGroup: "Adult (>40 yr)", range: "0 – 4.0" }],
+    41→   264→  },
+    42→   265→];
+    43→   266→
+    44→   267→export const testGroups: TestGroup[] = [
+    45→   268→  { id: "TG-01", name: "Routine Haematology", description: "CBC, ESR, Peripheral Smear and coagulation assays", tests: ["CBC", "ESR"], status: "Active" },
+    46→   269→  { id: "TG-02", name: "Thyroid", description: "Thyroid function panel — TSH, FT3, FT4", tests: ["TSH", "FT4"], status: "Active" },
+    47→   270→  { id: "TG-03", name: "Diabetes", description: "Glycaemic control and monitoring assays", tests: ["FBS", "HBA1C", "INSULIN-F"], status: "Active" },
+    48→   271→  { id: "TG-04", name: "Lipid", description: "Cardiac lipid risk markers", tests: ["LIPID"], status: "Active" },
+    49→   272→  { id: "TG-05", name: "Liver", description: "Hepatic function enzymes and bilirubin", tests: ["LFT"], status: "Active" },
+    50→   273→  { id: "TG-06", name: "Kidney", description: "Renal function markers", tests: ["KFT"], status: "Active" },
+    51→   274→  { id: "TG-07", name: "Vitamins", description: "Nutritional vitamin assays", tests: ["VITD", "VITB12"], status: "Active" },
+    52→   275→  { id: "TG-08", name: "Fever Panel", description: "Seasonal fever screening assays", tests: ["DENGUE-NS1", "WIDAL", "CBC"], status: "Active" },
+    53→   276→  { id: "TG-09", name: "Iron Studies", description: "Iron deficiency workup", tests: ["FERR"], status: "Active" },
+    54→   277→];
+    55→   278→
+    56→   279→export const packages: PackageItem[] = [
+    57→   280→  {
+    58→   281→    code: "PKG-FULL-ADV", name: "Full Body Checkup — Advanced", b2cPrice: 1999, tatHours: 24,
+    59→   282→    tests: ["CBC", "LFT", "KFT", "LIPID", "FBS", "HBA1C", "TSH", "VITD", "VITB12", "URINE-R", "ESR"],
+    60→   283→    includes: "62 parameters · Free doctor teleconsult · Fasting 10 hrs",
+    61→   284→    status: "Active",
+    62→   285→  },
+    63→   286→  {
+    64→   287→    code: "PKG-DIABETES", name: "Diabetes Care Package", b2cPrice: 1099, tatHours: 24,
+    65→   288→    tests: ["FBS", "HBA1C", "LIPID", "KFT", "URINE-R", "INSULIN-F"],
+    66→   289→    includes: "Diabetic profile with insulin resistance assessment",
+    67→   290→    status: "Active",
+    68→   291→  },
+    69→   292→  {
+    70→   293→    code: "PKG-FEVER", name: "Fever Panel — Basic", b2cPrice: 899, tatHours: 12,
+    71→   294→    tests: ["CBC", "DENGUE-NS1", "WIDAL", "URINE-R"],
+    72→   295→    includes: "Monsoon fever screening panel",
+    73→   296→    status: "Active",
+    74→   297→  },
+    75→   298→  {
+    76→   299→    code: "PKG-THYROID", name: "Thyroid Care Package", b2cPrice: 699, tatHours: 12,
+    77→   300→    tests: ["TSH", "FT4", "CBC"],
+    78→   301→    includes: "Complete thyroid screening",
+    79→   302→    status: "Active",
+    80→   303→  },
+    81→   304→  {
+    82→   305→    code: "PKG-SENIOR", name: "Senior Citizen Package (60+)", b2cPrice: 2499, tatHours: 24,
+    83→   306→    tests: ["CBC", "LFT", "KFT", "LIPID", "FBS", "HBA1C", "TSH", "PSA", "VITD", "URINE-R", "ESR"],
+    84→   307→    includes: "Age-specific screening · Home collection included",
+    85→   308→    status: "Active",
+    86→   309→  },
+    87→   310→  {
+    88→   311→    code: "PKG-WOMEN", name: "Women's Wellness Package", b2cPrice: 2199, tatHours: 24,
+    89→   312→    tests: ["CBC", "TSH", "VITD", "VITB12", "FERR", "PAP", "LIPID", "FBS"],
+    90→   313→    includes: "Includes LBC Pap smear · Iron studies",
+    91→   314→    status: "Active",
+    92→   315→  },
+    93→   316→];
+    94→   317→
+    95→   318→// ---------- B2B network ----------
+    96→   319→export const partners: Partner[] = [
+    97→   320→  {
+    98→   321→    id: "B2B-001", code: "ABC", name: "ABC Diagnostics", city: "Mumbai", contactPerson: "Rajesh Malhotra",
+    99→   322→    mobile: "+91 98200 11223", email: "rajesh@abcdiagnostics.in", joinedOn: "2023-04-12",
+   100→   323→    creditLimit: 300000, openingBalance: 42500, outstanding: 118400, discountPct: 40, pricingTier: "Tier 1 — Volume",
+   101→   324→    subAgencies: 3, status: "Active", lastSettlement: "2026-09-10",
+   102→   325→  },
+   103→   326→  {
+   104→   327→    id: "B2B-002", code: "HPC", name: "HealthPoint Collection Centre", city: "Thane", contactPerson: "Sunita Rane",
+   105→   328→    mobile: "+91 98200 44556", email: "sunita@healthpoint.co.in", joinedOn: "2023-08-03",
+   106→   329→    creditLimit: 200000, openingBalance: 0, outstanding: 46750, discountPct: 35, pricingTier: "Tier 2 — Standard",
+   107→   330→    subAgencies: 1, status: "Active", lastSettlement: "2026-09-18",
+   108→   331→  },
+   109→   332→  {
+   110→   333→    id: "B2B-003", code: "MDX", name: "Medipoint Diagnostics", city: "Nashik", contactPerson: "Amit Bhalerao",
+   111→   334→    mobile: "+91 98220 77889", email: "amit@medipoint.in", joinedOn: "2024-01-25",
+   112→   335→    creditLimit: 150000, openingBalance: 12000, outstanding: 89200, discountPct: 32, pricingTier: "Tier 2 — Standard",
+   113→   336→    subAgencies: 0, status: "Active", lastSettlement: "2026-08-30",
+   114→   337→  },
+   115→   338→  {
+   116→   339→    id: "B2B-004", code: "CPL", name: "CityCare Path Labs", city: "Pune", contactPerson: "Vivek Joshi",
+   117→   340→    mobile: "+91 99220 33445", email: "vivek@citycarepath.com", joinedOn: "2024-06-14",
+   118→   341→    creditLimit: 250000, openingBalance: 0, outstanding: 20400, discountPct: 38, pricingTier: "Tier 1 — Volume",
+   119→   342→    subAgencies: 2, status: "Active", lastSettlement: "2026-09-22",
+   120→   343→  },
+   121→   344→  {
+   122→   345→    id: "B2B-005", code: "ZHC", name: "Zenith Hospital Collection", city: "Navi Mumbai", contactPerson: "Farida Shaikh",
+   123→   346→    mobile: "+91 98920 66778", email: "farida@zenithhosp.in", joinedOn: "2025-02-08",
+   124→   347→    creditLimit: 100000, openingBalance: 0, outstanding: 0, discountPct: 30, pricingTier: "Tier 3 — New",
+   125→   348→    subAgencies: 0, status: "Active", lastSettlement: "2026-09-25",
+   126→   349→  },
+   127→   350→  {
+   128→   351→    id: "B2B-006", code: "GDX", name: "GreenLeaf Diagnostics", city: "Vasai", contactPerson: "Prakash Naik",
+   129→   352→    mobile: "+91 98670 99001", email: "prakash@greenleafdiag.in", joinedOn: "2025-09-01",
+   130→   353→    creditLimit: 50000, openingBalance: 0, outstanding: 15800, discountPct: 25, pricingTier: "Tier 3 — New",
+   131→   354→    subAgencies: 0, status: "Suspended", lastSettlement: "2026-06-30",
+   132→   355→  },
+   133→   356→];
+   134→   357→
+   135→   358→export const subAgencies: SubAgency[] = [
+   136→   359→  {
+   137→   360→    id: "SUB-001", parentId: "B2B-001", parentName: "ABC Diagnostics", name: "XYZ Collection Centre", city: "Mumbai",
+   138→   361→    contactPerson: "Imran Qureshi", mobile: "+91 90040 12345", email: "imran@xyzcollection.in", joinedOn: "2024-02-10",
+   139→   362→    status: "Active", monthlyBusiness: 184000, outstanding: 22300,
+   140→   363→  },
+   141→   364→  {
+   142→   365→    id: "SUB-002", parentId: "B2B-001", parentName: "ABC Diagnostics", name: "Health Point", city: "Mumbai",
+   143→   366→    contactPerson: "Deepa Kamble", mobile: "+91 90040 23456", email: "deepa@healthpoint.in", joinedOn: "2024-05-21",
+   144→   367→    status: "Active", monthlyBusiness: 121500, outstanding: 8700,
+   145→   368→  },
+   146→   369→  {
+   147→   370→    id: "SUB-003", parentId: "B2B-001", parentName: "ABC Diagnostics", name: "Maa Diagnostics", city: "Mumbai",
+   148→   371→    contactPerson: "Shyam Sunder Gupta", mobile: "+91 90040 34567", email: "shyam@maadiag.in", joinedOn: "2024-11-05",
+   149→   372→    status: "Active", monthlyBusiness: 96800, outstanding: 14100,
+   150→   373→  },
+   151→   374→  {
+   152→   375→    id: "SUB-004", parentId: "B2B-002", parentName: "HealthPoint Collection Centre", name: "Sunrise Collection Point", city: "Thane",
+   153→   376→    contactPerson: "Nitin Wagh", mobile: "+91 90220 45678", email: "nitin@sunrisecp.in", joinedOn: "2025-03-18",
+   154→   377→    status: "Active", monthlyBusiness: 64300, outstanding: 5200,
+   155→   378→  },
+   156→   379→  {
+   157→   380→    id: "SUB-005", parentId: "B2B-004", parentName: "CityCare Path Labs", name: "Kothrud Collection Centre", city: "Pune",
+   158→   381→    contactPerson: "Manisha Deshpande", mobile: "+91 91450 56789", email: "manisha@kothrudcc.in", joinedOn: "2025-07-09",
+   159→   382→    status: "Active", monthlyBusiness: 78050, outstanding: 6900,
+   160→   383→  },
+   161→   384→  {
+   162→   385→    id: "SUB-006", parentId: "B2B-004", parentName: "CityCare Path Labs", name: "Hadapsar Path Services", city: "Pune",
+   163→   386→    contactPerson: "Ganesh Shinde", mobile: "+91 91450 67890", email: "ganesh@hadapsarps.in", joinedOn: "2025-11-27",
+   164→   387→    status: "Inactive", monthlyBusiness: 21300, outstanding: 0,
+   165→   388→  },
+   166→   389→];
+   167→   390→
+   168→   391→// ---------- Patients ----------
+   169→   392→export const patients: Patient[] = [
+   170→   393→  { id: "PAT-00124", name: "Rahul Sharma", dob: "1992-03-14", age: 34, gender: "Male", mobile: "+91 98331 22001", email: "rahul.sharma@gmail.com", address: "B-702, Orchid Towers, Powai", city: "Mumbai", idProof: "Aadhaar XXXX 4412", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-08-02" },
+   171→   394→  { id: "PAT-00125", name: "Priya Nair", dob: "1988-11-02", age: 37, gender: "Female", mobile: "+91 98331 22002", email: "priya.nair@outlook.com", address: "14, Sea Breeze Apts, Bandra West", city: "Mumbai", idProof: "Aadhaar XXXX 8803", source: "ABC Diagnostics", channel: "B2B", sourceId: "B2B-001", registeredOn: "2026-08-14" },
+   172→   395→  { id: "PAT-00126", name: "Amit Patel", dob: "1979-06-28", age: 47, gender: "Male", mobile: "+91 98331 22003", email: "amit.patel@yahoo.in", address: "22, Rushivan Society, Thane West", city: "Thane", idProof: "PAN ABKPP1234L", source: "HealthPoint Collection Centre", channel: "B2B", sourceId: "B2B-002", registeredOn: "2026-08-21" },
+   173→   396→  { id: "PAT-00127", name: "Sneha Gupta", dob: "1995-01-19", age: 31, gender: "Female", mobile: "+91 98331 22004", email: "sneha.g@gmail.com", address: "901, Lake Homes, Chandivali", city: "Mumbai", idProof: "Aadhaar XXXX 1298", source: "XYZ Collection Centre", channel: "SUB", sourceId: "SUB-001", registeredOn: "2026-09-01" },
+   174→   397→  { id: "PAT-00128", name: "Mohammed Farhan", dob: "1984-09-08", age: 42, gender: "Male", mobile: "+91 98331 22005", email: "m.farhan@gmail.com", address: "5, Noor Manzil, Bhendi Bazaar", city: "Mumbai", idProof: "Aadhaar XXXX 6675", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-03" },
+   175→   398→  { id: "PAT-00129", name: "Kavita Joshi", dob: "1971-04-25", age: 55, gender: "Female", mobile: "+91 98331 22006", email: "kavita.joshi@gmail.com", address: "Plot 7, Sainath Nagar, Nashik Rd", city: "Nashik", idProof: "Aadhaar XXXX 3390", source: "Medipoint Diagnostics", channel: "B2B", sourceId: "B2B-003", registeredOn: "2026-09-05" },
+   176→   399→  { id: "PAT-00130", name: "Rajesh Kumar", dob: "1968-12-11", age: 57, gender: "Male", mobile: "+91 98331 22007", email: "rajesh.k78@gmail.com", address: "31, Shivaji Housing Soc, Dadar East", city: "Mumbai", idProof: "Aadhaar XXXX 7754", source: "ABC Diagnostics", channel: "B2B", sourceId: "B2B-001", registeredOn: "2026-09-08" },
+   177→   400→  { id: "PAT-00131", name: "Anita Desai", dob: "1990-07-30", age: 36, gender: "Female", mobile: "+91 98331 22008", email: "anita.desai@gmail.com", address: "A-1104, Lodha Amara, Thane", city: "Thane", idProof: "Aadhaar XXXX 9912", source: "Sunrise Collection Point", channel: "SUB", sourceId: "SUB-004", registeredOn: "2026-09-10" },
+   178→   401→  { id: "PAT-00132", name: "Suresh Menon", dob: "1962-02-17", age: 64, gender: "Male", mobile: "+91 98331 22009", email: "suresh.menon64@gmail.com", address: "8, Silver Oak, Chembur", city: "Mumbai", idProof: "Aadhaar XXXX 2256", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-12" },
+   179→   402→  { id: "PAT-00133", name: "Divya Iyer", dob: "1993-10-05", age: 32, gender: "Female", mobile: "+91 98331 22010", email: "divya.iyer@gmail.com", address: "402, Ananta Serene, Kolshet Rd", city: "Thane", idProof: "Aadhaar XXXX 5143", source: "HealthPoint Collection Centre", channel: "B2B", sourceId: "B2B-002", registeredOn: "2026-09-14" },
+   180→   403→  { id: "PAT-00134", name: "Arjun Singh", dob: "1986-05-22", age: 40, gender: "Male", mobile: "+91 98331 22011", email: "arjun.singh@gmail.com", address: "C-9, Staff Quarters, SEEPZ", city: "Mumbai", idProof: "PAN ARPS5678K", source: "XYZ Collection Centre", channel: "SUB", sourceId: "SUB-001", registeredOn: "2026-09-16" },
+   181→   404→  { id: "PAT-00135", name: "Meera Chatterjee", dob: "1975-08-14", age: 51, gender: "Female", mobile: "+91 98331 22012", email: "meera.c@gmail.com", address: "18, Fairlawn, Wadala West", city: "Mumbai", idProof: "Aadhaar XXXX 8290", source: "Maa Diagnostics", channel: "SUB", sourceId: "SUB-003", registeredOn: "2026-09-18" },
+   182→   405→  { id: "PAT-00136", name: "Vikas Verma", dob: "1981-01-09", age: 45, gender: "Male", mobile: "+91 98331 22013", email: "vikas.verma@gmail.com", address: "6, Kunal Icon, Pimple Saudagar", city: "Pune", idProof: "Aadhaar XXXX 4033", source: "CityCare Path Labs", channel: "B2B", sourceId: "B2B-004", registeredOn: "2026-09-19" },
+   183→   406→  { id: "PAT-00137", name: "Pooja Shetty", dob: "1996-03-27", age: 30, gender: "Female", mobile: "+91 98331 22014", email: "pooja.shetty@gmail.com", address: "301, Green Park, Kothrud", city: "Pune", idProof: "Aadhaar XXXX 6601", source: "Kothrud Collection Centre", channel: "SUB", sourceId: "SUB-005", registeredOn: "2026-09-20" },
+   184→   407→  { id: "PAT-00138", name: "Rohan Mehta", dob: "1998-12-03", age: 27, gender: "Male", mobile: "+91 98331 22015", email: "rohan.mehta@gmail.com", address: "7, Sunrise CHS, Vashi", city: "Navi Mumbai", idProof: "Aadhaar XXXX 7189", source: "Zenith Hospital Collection", channel: "B2B", sourceId: "B2B-005", registeredOn: "2026-09-22" },
+   185→   408→  { id: "PAT-00139", name: "Lakshmi Raman", dob: "1957-06-16", age: 69, gender: "Female", mobile: "+91 98331 22016", email: "lakshmi.raman@gmail.com", address: "12, Brindavan Society, Matunga", city: "Mumbai", idProof: "Aadhaar XXXX 0972", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-23" },
+   186→   409→  { id: "PAT-00140", name: "Imran Sheikh", dob: "1989-09-21", age: 37, gender: "Male", mobile: "+91 98331 22017", email: "imran.sheikh@gmail.com", address: "44, Mumbra Bypass Rd, Mumbra", city: "Thane", idProof: "Aadhaar XXXX 8845", source: "Health Point", channel: "SUB", sourceId: "SUB-002", registeredOn: "2026-09-24" },
+   187→   410→  { id: "PAT-00141", name: "Geeta Bhandari", dob: "1983-02-08", age: 43, gender: "Female", mobile: "+91 98331 22018", email: "geeta.b@gmail.com", address: "9, Shanti Nagar, Sakinaka", city: "Mumbai", idProof: "Aadhaar XXXX 5521", source: "ABC Diagnostics", channel: "B2B", sourceId: "B2B-001", registeredOn: "2026-09-25" },
+   188→   411→  { id: "PAT-00142", name: "Nikhil Agarwal", dob: "1991-11-29", age: 34, gender: "Male", mobile: "+91 98331 22019", email: "nikhil.a@gmail.com", address: "802, Marathon Futurex, Lower Parel", city: "Mumbai", idProof: "Aadhaar XXXX 3388", source: "B2C Walk-in", channel: "B2C", registeredOn: "2026-09-26" },
+   189→   412→  { id: "PAT-00143", name: "Shalini Verma", dob: "1966-04-03", age: 60, gender: "Female", mobile: "+91 98331 22020", email: "shalini.v@gmail.com", address: "3, Palm Beach Rd, Sanpada", city: "Navi Mumbai", idProof: "Aadhaar XXXX 7702", source: "Zenith Hospital Collection", channel: "B2B", sourceId: "B2B-005", registeredOn: "2026-09-27" },
+   190→   413→];
+   191→   414→
+   192→   415→// ---------- Referring doctors ----------
+   193→   416→export const doctors = [
+   194→   417→  { id: "DR-01", name: "Dr. Suresh Mehta", speciality: "General Physician", hospital: "Mehta Clinic, Powai", referralPct: 10 },
+   195→   418→  { id: "DR-02", name: "Dr. Rekha Iyer", speciality: "Endocrinologist", hospital: "Iyer Diabetes Centre, Sion", referralPct: 10 },
+   196→   419→  { id: "DR-03", name: "Dr. Aditya Kulkarni", speciality: "Cardiologist", hospital: "HeartCare, Dadar", referralPct: 8 },
+   197→   420→  { id: "DR-04", name: "Dr. Farida Contractor", speciality: "Pathologist", hospital: "Apex Labs — In-house", referralPct: 0 },
+   198→   421→  { id: "DR-05", name: "Dr. Sameer Bhagwat", speciality: "Oncologist", hospital: "Sion Hospital (Visiting)", referralPct: 8 },
+   199→   422→  { id: "DR-06", name: "Dr. Meenakshi Rao", speciality: "Gynaecologist", hospital: "MatriCare, Thane", referralPct: 10 },
+   200→   423→];
+   201→   424→
+   202→   425→// ---------- Pathologists ----------
+   203→   426→export const pathologists: Pathologist[] = [
+   204→   427→  { id: "PATH-01", name: "Dr. Anjali Deshpande", qualification: "MD (Pathology)", regNo: "MMC/2010/24315", speciality: "Haematology & Clinical Pathology", mobile: "+91 98200 71001", email: "anjali.d@apexlabs.in", signatureOnFile: true, status: "Active" },
+   205→   428→  { id: "PATH-02", name: "Dr. Vikram Rao", qualification: "MD (Biochemistry), DNB", regNo: "MMC/2008/19204", speciality: "Biochemistry & Immunology", mobile: "+91 98200 71002", email: "vikram.rao@apexlabs.in", signatureOnFile: true, status: "Active" },
+   206→   429→  { id: "PATH-03", name: "Dr. Farida Contractor", qualification: "MD (Pathology), FRCPath", regNo: "MMC/2005/11028", speciality: "Histopathology & Cytology", mobile: "+91 98200 71003", email: "farida.c@apexlabs.in", signatureOnFile: true, status: "Active" },
+   207→   430→  { id: "PATH-04", name: "Dr. Sanjay Mukherjee", qualification: "MD (Microbiology)", regNo: "MMC/2012/30188", speciality: "Microbiology & Molecular", mobile: "+91 98200 71004", email: "sanjay.m@apexlabs.in", signatureOnFile: false, status: "Active" },
+   208→   431→];
+   209→   432→
+   210→   433→// ---------- Branches / Couriers / Templates ----------
+   211→   434→export const branches: Branch[] = [
+   212→   435→  { id: "BR-01", name: "Central Reference Lab — Andheri", type: "Central Lab", city: "Mumbai", address: "Plot 14, MIDC Health Square, Andheri East", incharge: "Dr. Anjali Deshpande", mobile: "+91 22 4890 1234", status: "Active" },
+   213→   436→  { id: "BR-02", name: "Apex Collection Point — Powai", type: "Collection Centre", city: "Mumbai", address: "Shop 9, Galleria Mall, Powai", incharge: "Sarita Kadam", mobile: "+91 98200 71201", status: "Active" },
+   214→   437→  { id: "BR-03", name: "Apex Collection Point — Dadar", type: "Collection Centre", city: "Mumbai", address: "217, Ranade Road, Dadar West", incharge: "Mohan Pillai", mobile: "+91 98200 71202", status: "Active" },
+   215→   438→  { id: "BR-04", name: "Apex Sample Hub — Thane", type: "Processing Unit", city: "Thane", address: "16, Ghodbunder Industrial Est.", incharge: "Rekha Sawant", mobile: "+91 98200 71203", status: "Active" },
+   216→   439→  { id: "BR-05", name: "Apex Collection Point — Vashi", type: "Collection Centre", city: "Navi Mumbai", address: "Station Complex, Sector 17", incharge: "Anthony Dsouza", mobile: "+91 98200 71204", status: "Inactive" },
+   217→   440→];
+   218→   441→
+   219→   442→export const couriers: Courier[] = [
+   220→   443→  { id: "CUR-01", name: "BlueDart Med Express", type: "Agency", contactPerson: "Sanjay Patil", mobile: "+91 98330 51001", cities: "Mumbai · Thane · Navi Mumbai", dailyTrips: 6, status: "Active" },
+   221→   444→  { id: "CUR-02", name: "Delhivery Health", type: "Agency", contactPerson: "Ravi Nair", mobile: "+91 98330 51002", cities: "Pune · Nashik", dailyTrips: 3, status: "Active" },
+   222→   445→  { id: "CUR-03", name: "LabRunners", type: "Agency", contactPerson: "Deepak Yadav", mobile: "+91 98330 51003", cities: "Mumbai · Vasai", dailyTrips: 4, status: "Active" },
+   223→   446→  { id: "CUR-04", name: "Apex In-house Van", type: "In-house", contactPerson: "Ramesh Bhosale", mobile: "+91 98330 51004", cities: "Andheri · Powai · Dadar routes", dailyTrips: 8, status: "Active" },
+   224→   447→];
+   225→   448→
+   226→   449→export const reportTemplates: ReportTemplate[] = [
+   227→   450→  { id: "RT-01", name: "Standard Clinical Report", appliesTo: "All routine tests", format: "A4 Portrait", header: "Apex default header with NABL logo", footer: "Report footer with QR + disclaimer", hasQr: true, hasSignature: true, status: "Active" },
+   228→   451→  { id: "RT-02", name: "Histopathology Report", appliesTo: "HPE, Cytology, Pap", format: "A4 Portrait (2 page)", header: "Descriptive header with specimen block", footer: "Pathologist signature + gross image note", hasQr: true, hasSignature: true, status: "Active" },
+   229→   452→  { id: "RT-03", name: "Microbiology & Culture Report", appliesTo: "Cultures, AFB, CBNAAT", format: "A4 Portrait", header: "Micro header with incubation note", footer: "Standard footer", hasQr: true, hasSignature: true, status: "Active" },
+   230→   453→  { id: "RT-04", name: "Molecular / NGS Report", appliesTo: "BRCA, genetic panels", format: "A4 Portrait (4 page)", header: "Genetic disclaimer header", footer: "Genetic counselling note", hasQr: true, hasSignature: true, status: "Active" },
+   231→   454→  { id: "RT-05", name: "B2B Bulk Report Format", appliesTo: "B2B partner portal prints", format: "A4 Landscape batch", header: "Partner co-branded header", footer: "Batch footer with page x of y", hasQr: true, hasSignature: true, status: "Active" },
+   232→   455→];
+   233→   456→
+   234→   457→// ---------- Pricing rules ----------
+   235→   458→// Hierarchy: B2C list price -> B2B price -> Sub-agency price
+   236→   459→export const priceRules: PriceRule[] = [
+   237→   460→  // B2C (list price mirrors TestMaster.b2cPrice)
+   238→   461→  ...tests.map((t, i) => ({
+   239→   462→    id: `PR-B2C-${String(i + 1).padStart(3, "0")}`,
+   240→   463→    testCode: t.code, testName: t.name, scope: "B2C" as const, scopeId: "ALL", scopeName: "Patient (B2C List)",
+   241→   464→    price: t.b2cPrice, effectiveFrom: "2026-04-01", status: "Active" as const,
+   242→   465→  })),
+   243→   466→  // ABC Diagnostics (Tier 1 ~ 50-55% off list)
+   244→   467→  ...[
+   245→   468→    ["CBC", 150], ["TSH", 220], ["HBA1C", 250], ["LFT", 300], ["KFT", 300], ["LIPID", 280],
+   246→   469→    ["FBS", 80], ["VITD", 650], ["VITB12", 550], ["ESR", 90], ["URINE-R", 110],
+   247→   470→    ["DENGUE-NS1", 320], ["WIDAL", 140], ["HBSAG", 170], ["HIV", 190], ["CRP", 280],
+   248→   471→    ["FERR", 420], ["PSA", 380], ["PROCALC", 950], ["CULTURE-UR", 360], ["AFB", 170],
+   249→   472→    ["TRUGENE", 1050], ["HLA-B27", 850], ["FT4", 190], ["INSULIN-F", 350],
+   250→   473→  ].map(([code, price], i) => ({
+   251→   474→    id: `PR-B2B-001-${String(i + 1).padStart(3, "0")}`,
+   252→   475→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   253→   476→    scope: "B2B" as const, scopeId: "B2B-001", scopeName: "ABC Diagnostics",
+   254→   477→    price: price as number, effectiveFrom: "2026-04-01", minQty: 10, status: "Active" as const,
+   255→   478→  })),
+   256→   479→  // HealthPoint (Tier 2)
+   257→   480→  ...[
+   258→   481→    ["CBC", 180], ["TSH", 250], ["HBA1C", 290], ["LFT", 340], ["KFT", 340], ["LIPID", 320], ["FBS", 90],
+   259→   482→    ["VITD", 720], ["VITB12", 610], ["ESR", 110], ["URINE-R", 130], ["DENGUE-NS1", 380], ["WIDAL", 160],
+   260→   483→  ].map(([code, price], i) => ({
+   261→   484→    id: `PR-B2B-002-${String(i + 1).padStart(3, "0")}`,
+   262→   485→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   263→   486→    scope: "B2B" as const, scopeId: "B2B-002", scopeName: "HealthPoint Collection Centre",
+   264→   487→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   265→   488→  })),
+   266→   489→  // Medipoint (Tier 2)
+   267→   490→  ...[
+   268→   491→    ["CBC", 190], ["TSH", 265], ["HBA1C", 300], ["LFT", 355], ["KFT", 355], ["LIPID", 335], ["FBS", 95],
+   269→   492→    ["VITD", 760], ["WIDAL", 170], ["DENGUE-NS1", 395], ["URINE-R", 140], ["ESR", 115],
+   270→   493→  ].map(([code, price], i) => ({
+   271→   494→    id: `PR-B2B-003-${String(i + 1).padStart(3, "0")}`,
+   272→   495→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   273→   496→    scope: "B2B" as const, scopeId: "B2B-003", scopeName: "Medipoint Diagnostics",
+   274→   497→    price: price as number, effectiveFrom: "2026-07-01", status: "Active" as const,
+   275→   498→  })),
+   276→   499→  // CityCare (Tier 1)
+   277→   500→  ...[
+   278→   501→    ["CBC", 160], ["TSH", 230], ["HBA1C", 260], ["LFT", 310], ["KFT", 310], ["LIPID", 295], ["FBS", 85],
+   279→   502→    ["VITD", 680], ["VITB12", 570], ["PSA", 400], ["URINE-R", 115], ["ESR", 95], ["CRP", 290],
+   280→   503→  ].map(([code, price], i) => ({
+   281→   504→    id: `PR-B2B-004-${String(i + 1).padStart(3, "0")}`,
+   282→   505→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   283→   506→    scope: "B2B" as const, scopeId: "B2B-004", scopeName: "CityCare Path Labs",
+   284→   507→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   285→   508→  })),
+   286→   509→  // Zenith (Tier 3)
+   287→   510→  ...[
+   288→   511→    ["CBC", 210], ["TSH", 290], ["HBA1C", 320], ["LFT", 380], ["KFT", 380], ["LIPID", 360], ["FBS", 100],
+   289→   512→  ].map(([code, price], i) => ({
+   290→   513→    id: `PR-B2B-005-${String(i + 1).padStart(3, "0")}`,
+   291→   514→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   292→   515→    scope: "B2B" as const, scopeId: "B2B-005", scopeName: "Zenith Hospital Collection",
+   293→   516→    price: price as number, effectiveFrom: "2026-02-08", status: "Active" as const,
+   294→   517→  })),
+   295→   518→  // Sub-agencies under ABC (parent cost + margin)
+   296→   519→  ...[
+   297→   520→    ["CBC", 180], ["TSH", 260], ["HBA1C", 295], ["LFT", 350], ["KFT", 350], ["LIPID", 330], ["FBS", 95], ["VITD", 730],
+   298→   521→  ].map(([code, price], i) => ({
+   299→   522→    id: `PR-SUB-001-${String(i + 1).padStart(3, "0")}`,
+   300→   523→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   301→   524→    scope: "SUB" as const, scopeId: "SUB-001", scopeName: "XYZ Collection Centre (via ABC)",
+   302→   525→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   303→   526→  })),
+   304→   527→  ...[
+   305→   528→    ["CBC", 190], ["TSH", 270], ["HBA1C", 305], ["LFT", 360], ["KFT", 360], ["LIPID", 340], ["FBS", 100],
+   306→   529→  ].map(([code, price], i) => ({
+   307→   530→    id: `PR-SUB-002-${String(i + 1).padStart(3, "0")}`,
+   308→   531→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   309→   532→    scope: "SUB" as const, scopeId: "SUB-002", scopeName: "Health Point (via ABC)",
+   310→   533→    price: price as number, effectiveFrom: "2026-04-01", status: "Active" as const,
+   311→   534→  })),
+   312→   535→  ...[
+   313→   536→    ["CBC", 200], ["TSH", 280], ["HBA1C", 315], ["LFT", 370], ["KFT", 370], ["LIPID", 350], ["FBS", 105],
+   314→   537→  ].map(([code, price], i) => ({
+   315→   538→    id: `PR-SUB-003-${String(i + 1).padStart(3, "0")}`,
+   316→   539→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   317→   540→    scope: "SUB" as const, scopeId: "SUB-003", scopeName: "Maa Diagnostics (via ABC)",
+   318→   541→    price: price as number, effectiveFrom: "2026-06-15", status: "Active" as const,
+   319→   542→  })),
+   320→   543→  ...[
+   321→   544→    ["CBC", 205], ["TSH", 285], ["HBA1C", 320], ["LFT", 375], ["KFT", 375], ["LIPID", 355],
+   322→   545→  ].map(([code, price], i) => ({
+   323→   546→    id: `PR-SUB-004-${String(i + 1).padStart(3, "0")}`,
+   324→   547→    testCode: code as string, testName: tests.find((t) => t.code === code)?.name ?? String(code),
+   325→   548→    scope: "SUB" as const, scopeId: "SUB-005", scopeName: "Kothrud Collection Centre (via CityCare)",
+   326→   549→    price: price as number, effectiveFrom: "2026-07-09", status: "Active" as const,
+   327→   550→  })),
+   328→   551→  // Special promotional price
+   329→   552→  {
+   330→   553→    id: "PR-SPC-001", testCode: "VITD", testName: "Vitamin D (25-OH)", scope: "B2C", scopeId: "ALL",
+   331→   554→    scopeName: "Monsoon Promo — B2C", price: 999, effectiveFrom: "2026-09-01", effectiveTo: "2026-09-30",
+   332→   555→    status: "Active",
+   333→   556→  },
+   334→   557→  {
+   335→   558→    id: "PR-SPC-002", testCode: "PKG-FULL-ADV", testName: "Full Body Checkup — Advanced", scope: "B2B",
+   336→   559→    scopeId: "B2B-001", scopeName: "ABC Diagnostics — Volume Deal", price: 950, effectiveFrom: "2026-09-15",
+   337→   560→    minQty: 25, status: "Active",
+   338→   561→  },
+   339→   562→];
+   340→   563→
